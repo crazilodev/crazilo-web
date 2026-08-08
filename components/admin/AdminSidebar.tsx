@@ -35,11 +35,13 @@ export default function AdminSidebar() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-5 border-b border-white/10">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo/crazilo-logo.png" alt="Crazilo" width={120} height={40} className="h-8 w-auto brightness-0 invert" />
+      <div className="p-5 border-b border-white/10 flex items-center justify-between">
+        <Link href="/admin" className="flex items-center gap-2">
+          <div className="bg-white/95 px-2.5 py-1 rounded-xl shadow-sm">
+            <Image src="/logo/crazilo-logo.png" alt="Crazilo Admin" width={110} height={36} className="h-7 w-auto object-contain" />
+          </div>
         </Link>
-        <p className="text-white/40 text-xs mt-1 ml-1">Admin Panel</p>
+        <span className="bg-brand-red/30 border border-brand-red/50 text-red-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Admin</span>
       </div>
 
       {/* Nav */}
