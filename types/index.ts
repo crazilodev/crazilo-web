@@ -18,7 +18,7 @@ export interface Category {
   image_url: string | null
   icon_url: string | null
   parent_id: string | null
-  display_order: number
+  sort_order: number
   is_active: boolean
   meta_title: string | null
   meta_description: string | null

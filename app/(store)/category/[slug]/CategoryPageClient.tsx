@@ -16,17 +16,28 @@ export default function CategoryPageClient({ category }: Props) {
   useEffect(() => {
     const fetch = async () => {
       const supabase = createClient()
+      let categoryIds = [category.id]
+
+      if (!category.parent_id) {
+        const { data: children } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('parent_id', category.id)
+
+        categoryIds = [category.id, ...(children?.map((child) => child.id) || [])]
+      }
+
       const { data } = await supabase
         .from('products')
         .select('*, category:categories(*)')
         .eq('is_active', true)
-        .eq('category_id', category.id)
+        .in('category_id', categoryIds)
         .order('created_at', { ascending: false })
       setProducts(data || [])
       setLoading(false)
     }
     fetch()
-  }, [category.id])
+  }, [category.id, category.parent_id])
 
   return (
     <div className="min-h-screen bg-gray-50">

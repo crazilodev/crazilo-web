@@ -34,7 +34,7 @@ export default function ProductsPage() {
         .from('categories')
         .select('*')
         .eq('is_active', true)
-        .order('display_order')
+        .order('sort_order')
       if (data) setCategories(data)
     }
     fetchCategories()

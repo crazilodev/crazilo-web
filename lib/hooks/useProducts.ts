@@ -23,10 +23,22 @@ export function useProducts(filters?: Partial<FilterState>) {
       if (filters?.category && filters.category !== 'all') {
         const { data: cat } = await supabase
           .from('categories')
-          .select('id')
+          .select('id, parent_id')
           .eq('slug', filters.category)
           .single()
-        if (cat) query = query.eq('category_id', cat.id)
+        if (cat) {
+          if (cat.parent_id) {
+            query = query.eq('category_id', cat.id)
+          } else {
+            const { data: children } = await supabase
+              .from('categories')
+              .select('id')
+              .eq('parent_id', cat.id)
+
+            const categoryIds = [cat.id, ...(children?.map((child) => child.id) || [])]
+            query = query.in('category_id', categoryIds)
+          }
+        }
       }
 
       if (filters?.minPrice != null) {

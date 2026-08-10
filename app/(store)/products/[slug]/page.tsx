@@ -60,7 +60,7 @@ const SAMPLE_PRODUCT: Product = {
     image_url: null,
     icon_url: null,
     parent_id: null,
-    display_order: 1,
+    sort_order: 1,
     is_active: true,
     meta_title: null,
     meta_description: null,

@@ -21,9 +21,9 @@ export default function NewsletterSection() {
       const supabase = createClient()
       const { error: err } = await supabase
         .from('newsletter_subscribers')
-        .upsert({ email, is_active: true }, { onConflict: 'email' })
+        .insert({ email, is_active: true })
 
-      if (err && !err.message.includes('duplicate')) throw err
+      if (err && !/duplicate|unique/i.test(err.message)) throw err
       setSuccess(true)
       setEmail('')
     } catch {
