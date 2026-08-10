@@ -1,12 +1,20 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
   Phone, Mail, MapPin, Instagram, Facebook, Twitter,
-  Youtube, ShieldCheck, Truck, RefreshCw, HeartHandshake
+  Youtube, ShieldCheck, Truck, RefreshCw, HeartHandshake,
+  ChevronDown
 } from 'lucide-react'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
+
+  const [quickLinksOpen, setQuickLinksOpen] = useState(false)
+  const [categoriesOpen, setCategoriesOpen] = useState(false)
+  const [contactUsOpen, setContactUsOpen] = useState(false)
 
   const quickLinks = [
     { label: 'Home', href: '/' },
@@ -98,11 +106,21 @@ export default function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-4 text-brand-gold">
-              Quick Links
-            </h4>
-            <ul className="space-y-3">
+          <div className="border-b border-white/10 pb-4 lg:border-none lg:pb-0">
+            <button
+              onClick={() => setQuickLinksOpen(!quickLinksOpen)}
+              className="w-full flex items-center justify-between lg:block text-left focus:outline-none"
+            >
+              <h4 className="text-xs font-bold text-white uppercase tracking-widest text-brand-gold lg:mb-4">
+                Quick Links
+              </h4>
+              <ChevronDown
+                className={`w-4 h-4 text-brand-gold transition-transform duration-200 lg:hidden ${
+                  quickLinksOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            <ul className={`${quickLinksOpen ? 'block' : 'hidden'} lg:block space-y-3 mt-4 lg:mt-0`}>
               {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link
@@ -118,11 +136,21 @@ export default function Footer() {
           </div>
 
           {/* Categories */}
-          <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-4 text-brand-gold">
-              Categories
-            </h4>
-            <ul className="space-y-3">
+          <div className="border-b border-white/10 pb-4 lg:border-none lg:pb-0">
+            <button
+              onClick={() => setCategoriesOpen(!categoriesOpen)}
+              className="w-full flex items-center justify-between lg:block text-left focus:outline-none"
+            >
+              <h4 className="text-xs font-bold text-white uppercase tracking-widest text-brand-gold lg:mb-4">
+                Categories
+              </h4>
+              <ChevronDown
+                className={`w-4 h-4 text-brand-gold transition-transform duration-200 lg:hidden ${
+                  categoriesOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            <ul className={`${categoriesOpen ? 'block' : 'hidden'} lg:block space-y-3 mt-4 lg:mt-0`}>
               {categories.map((cat) => (
                 <li key={cat.href}>
                   <Link
@@ -138,11 +166,21 @@ export default function Footer() {
           </div>
 
           {/* Contact Us */}
-          <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-4 text-brand-gold">
-              Contact Us
-            </h4>
-            <ul className="space-y-4">
+          <div className="border-b border-white/10 pb-4 lg:border-none lg:pb-0">
+            <button
+              onClick={() => setContactUsOpen(!contactUsOpen)}
+              className="w-full flex items-center justify-between lg:block text-left focus:outline-none"
+            >
+              <h4 className="text-xs font-bold text-white uppercase tracking-widest text-brand-gold lg:mb-4">
+                Contact Us
+              </h4>
+              <ChevronDown
+                className={`w-4 h-4 text-brand-gold transition-transform duration-200 lg:hidden ${
+                  contactUsOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            <ul className={`${contactUsOpen ? 'block' : 'hidden'} lg:block space-y-4 mt-4 lg:mt-0`}>
               <li className="flex items-start gap-3">
                 <Phone className="w-4 h-4 text-brand-gold flex-shrink-0 mt-1" />
                 <div>
@@ -167,8 +205,8 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="border-t border-white/10 bg-black/40">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-400">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-gray-400 text-center sm:text-left">
             © {currentYear} Crazilo Dryfruits and Spices. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
