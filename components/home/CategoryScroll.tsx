@@ -1,132 +1,122 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import Link from 'next/link'
+import { useRef } from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Apple, Flame, Sprout, Sparkles, Gift, ShoppingBag, Layers, Leaf } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { Category } from '@/types'
+import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-const CATEGORY_ICONS: Record<string, any> = {
-  'dry-fruits': Apple,
-  'nuts': Sprout,
-  'spices': Flame,
-  'seeds': Leaf,
-  'makhana': Sparkles,
-  'trail-mixes': Layers,
-  'gift-boxes': Gift,
-  'combos': Sparkles,
-  'all': ShoppingBag,
-}
+const CATEGORY_ITEMS = [
+  {
+    name: 'DRY FRUITS',
+    slug: 'dry-fruits',
+    image: '/images/cat-dryfruits.png',
+    link: '/category/dry-fruits',
+  },
+  {
+    name: 'NUTS & SEEDS',
+    slug: 'nuts',
+    image: '/images/cat-nuts.png',
+    link: '/category/nuts',
+  },
+  {
+    name: 'SPICES',
+    slug: 'spices',
+    image: '/images/cat-spices.png',
+    link: '/category/spices',
+  },
+  {
+    name: 'COMBOS',
+    slug: 'combos',
+    image: '/images/cat-combos.png',
+    link: '/category/combos',
+  },
+  {
+    name: 'GIFTS',
+    slug: 'gift-boxes',
+    image: '/images/cat-gifts.png',
+    link: '/category/gift-boxes',
+  },
+  {
+    name: 'MAKHANA',
+    slug: 'makhana',
+    image: '/images/cat-makhana.png',
+    link: '/category/makhana',
+  },
+]
 
 export default function CategoryScroll() {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const fetch = async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order')
-      if (data) setCategories(data)
-      setLoading(false)
-    }
-    fetch()
-  }, [])
-
-  const scroll = (dir: 'left' | 'right') => {
+  const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: dir === 'right' ? 240 : -240, behavior: 'smooth' })
+      const scrollAmount = direction === 'left' ? -300 : 300
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
     }
-  }
-
-  if (loading) {
-    return (
-      <section className="py-10 bg-white">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-4 overflow-hidden">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-24 h-28 rounded-2xl skeleton" />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
   }
 
   return (
-    <section className="py-10 bg-white">
+    <section className="py-10 bg-[#FFFDF9] border-b border-[#EFE7DD]">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+        
+        {/* Header with Arrow Navigation */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-heading text-2xl font-bold text-gray-900">Shop by Category</h2>
-            <div className="h-1 w-16 bg-gradient-to-r from-brand-red to-brand-gold rounded-full mt-2" />
+            <span className="text-[11px] font-black text-[#A65E2E] uppercase tracking-widest block mb-1">
+              EXPLORE OUR RANGE
+            </span>
+            <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-[#1A1A1A] tracking-tight">
+              Shop by Category
+            </h2>
           </div>
+
+          {/* Slider Arrow Controls */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => scroll('left')}
-              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-brand-red hover:text-brand-red transition-colors"
-              aria-label="Scroll left"
+              className="w-9 h-9 rounded-full bg-white border border-[#EFE7DD] hover:border-[#A61919] hover:bg-[#FAF4ED] text-gray-700 flex items-center justify-center transition-all shadow-sm"
+              aria-label="Previous Category"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => scroll('right')}
-              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-brand-red hover:text-brand-red transition-colors"
-              aria-label="Scroll right"
+              className="w-9 h-9 rounded-full bg-white border border-[#EFE7DD] hover:border-[#A61919] hover:bg-[#FAF4ED] text-gray-700 flex items-center justify-center transition-all shadow-sm"
+              aria-label="Next Category"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Scroll Container */}
+        {/* Category Horizontal Slider Cards */}
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto hide-scrollbar pb-2"
+          className="flex items-center gap-4 overflow-x-auto scrollbar-none pb-2 scroll-smooth"
         >
-          {categories.map((cat, index) => {
-            const IconComponent = CATEGORY_ICONS[cat.slug] || Leaf
-            return (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="flex-shrink-0"
-              >
-                <Link
-                  href={cat.slug === 'all' ? '/products' : `/category/${cat.slug}`}
-                  className="flex flex-col items-center gap-3 group"
-                >
-                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-transparent group-hover:border-brand-red transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1">
-                    {cat.image_url ? (
-                      <Image
-                        src={cat.image_url}
-                        alt={cat.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-brand-cream to-amber-50 flex items-center justify-center">
-                        <IconComponent className="w-8 h-8 text-brand-red" />
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-xs font-semibold text-gray-700 group-hover:text-brand-red transition-colors text-center whitespace-nowrap">
-                    {cat.name}
-                  </span>
-                </Link>
-              </motion.div>
-            )
-          })}
+          {CATEGORY_ITEMS.map((item) => (
+            <Link
+              key={item.name}
+              href={item.link}
+              className="flex-shrink-0 flex items-center gap-3 bg-[#FAF4ED] hover:bg-[#FFF0E2] border border-[#EFE5D8] hover:border-[#A61919] px-5 py-3.5 rounded-2xl transition-all duration-300 group shadow-sm min-w-[200px]"
+            >
+              {/* Product Bowl Cutout Image */}
+              <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white/80 p-1 flex-shrink-0 group-hover:scale-110 transition-transform">
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  fill
+                  className="object-contain"
+                />
+              </div>
+
+              {/* Category Name */}
+              <span className="font-heading text-xs font-black text-[#1A1A1A] group-hover:text-[#A61919] tracking-wider uppercase">
+                {item.name}
+              </span>
+            </Link>
+          ))}
         </div>
+
       </div>
     </section>
   )

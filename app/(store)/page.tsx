@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import HeroSlider from '@/components/home/HeroSlider'
 import CategoryScroll from '@/components/home/CategoryScroll'
+import CashewStoreSection from '@/components/home/CashewStoreSection'
 import FindYourSnack from '@/components/home/FindYourSnack'
 import FeaturedProducts from '@/components/home/FeaturedProducts'
 import OfferBanner from '@/components/home/OfferBanner'
@@ -12,7 +13,7 @@ import NewsletterSection from '@/components/home/NewsletterSection'
 export const metadata: Metadata = {
   title: 'Crazilo — Premium Dryfruits & Spices',
   description:
-    'Shop premium quality dry fruits, nuts, and spices at Crazilo. 100% natural, no preservatives. Free shipping above ₹599.',
+    'Shop premium quality dry fruits, nuts, and spices at Crazilo. 100% natural, no preservatives. Free shipping above ₹999.',
 }
 
 export default function HomePage() {
@@ -20,6 +21,7 @@ export default function HomePage() {
     <>
       <HeroSlider />
       <CategoryScroll />
+      <CashewStoreSection />
       <FindYourSnack />
       <FeaturedProducts />
       <OfferBanner />
