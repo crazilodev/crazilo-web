@@ -48,13 +48,47 @@ export async function middleware(request: NextRequest) {
 
   if (pathname.startsWith('/admin')) {
     if (!user) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+      const loginUrl = new URL('/auth/login', request.url)
+      loginUrl.searchParams.set('redirect', `${request.nextUrl.pathname}${request.nextUrl.search}`)
+      return NextResponse.redirect(loginUrl)
     }
-    const { data: profile } = await supabase
+    
+    let { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
+
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@crazilo.com'
+    if (user.email === adminEmail && (!profile || profile.role !== 'admin')) {
+      try {
+        const { createClient: createSupabaseJSClient } = await import('@supabase/supabase-js')
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_KEY
+        const supabaseAdminClient = createSupabaseJSClient(SUPABASE_URL, serviceRoleKey)
+        
+        await supabaseAdminClient
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || 'Admin',
+            role: 'admin',
+            is_active: true,
+            updated_at: new Date().toISOString()
+          })
+
+        // Re-fetch profile
+        const { data: updatedProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+        profile = updatedProfile
+      } catch (err) {
+        console.error('Error promoting admin in middleware:', err)
+      }
+    }
+
     if (!profile || profile.role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url))
     }

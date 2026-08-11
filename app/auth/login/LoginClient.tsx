@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { syncAdminRole } from '@/app/admin/actions'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import toast from 'react-hot-toast'
@@ -17,9 +18,18 @@ interface LoginForm {
 }
 
 export default function LoginClient() {
+  function isInternalUrl(url: string | null): boolean {
+    if (!url) return false
+    if (url.includes('://') || url.startsWith('//') || url.startsWith('\\\\') || url.toLowerCase().startsWith('javascript:')) {
+      return false
+    }
+    return url.startsWith('/')
+  }
+
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/'
+  const rawRedirect = searchParams.get('redirect')
+  const cleanRedirect = isInternalUrl(rawRedirect) ? rawRedirect! : '/'
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const {
@@ -32,14 +42,33 @@ export default function LoginClient() {
     setLoading(true)
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
+      const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      if (authError) throw authError
+      if (!user) throw new Error('Failed to retrieve authentication details')
+
+      // Sync/promote admin role if email matches admin email
+      await syncAdminRole()
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError || !profile) {
+        throw new Error('Failed to load user account profile details')
+      }
+
       toast.success('Welcome back! 👋')
-      router.push(redirect)
-      router.refresh()
+
+      if (profile.role === 'admin') {
+        const dest = cleanRedirect.startsWith('/admin') ? cleanRedirect : '/admin'
+        window.location.href = dest
+      } else {
+        window.location.href = cleanRedirect
+      }
     } catch (err: any) {
       toast.error(err.message || 'Invalid credentials')
-    } finally {
       setLoading(false)
     }
   }
