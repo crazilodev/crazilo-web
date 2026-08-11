@@ -1,14 +1,33 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
-import { PlusCircle, Edit, Trash2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { Banner } from '@/types'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
+import EmptyState from '@/components/admin/EmptyState'
+import ConfirmDialog from '@/components/admin/ConfirmDialog'
+import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import ImageUploader from '@/components/admin/ImageUploader'
 import Image from 'next/image'
+import {
+  Image as ImageIcon,
+  PlusCircle,
+  Edit,
+  Trash2,
+  Eye,
+  EyeOff,
+  Search,
+} from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { Banner } from '@/types'
+import {
+  createBannerAction,
+  updateBannerAction,
+  deleteBannerAction,
+  toggleBannerStatusAction,
+  reorderBannerAction,
+} from './actions'
 import toast from 'react-hot-toast'
 
 interface BannerForm {
@@ -18,131 +37,477 @@ interface BannerForm {
   cta_text: string
   cta_link: string
   display_order: number
+  is_active: boolean
+  bg_color: string
+  text_color: string
+  starts_at: string
+  ends_at: string
 }
 
 export default function AdminBannersPage() {
   const [banners, setBanners] = useState<Banner[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+
+  // Form & modal state
+  const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Banner | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
-  const { register, handleSubmit, reset } = useForm<BannerForm>()
 
-  const fetchBanners = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('banners').select('*').order('display_order')
-    setBanners(data || [])
-    setLoading(false)
+  // Delete state
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<BannerForm>({
+    defaultValues: {
+      cta_text: 'Shop Now',
+      cta_link: '/products',
+      display_order: 0,
+      is_active: true,
+      bg_color: '#8B0000',
+      text_color: '#FFFFFF',
+    },
+  })
+
+  const fetchBanners = useCallback(async () => {
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      let query = supabase.from('banners').select('*')
+
+      if (statusFilter === 'active') {
+        query = query.eq('is_active', true)
+      } else if (statusFilter === 'inactive') {
+        query = query.eq('is_active', false)
+      }
+
+      if (search.trim()) {
+        query = query.ilike('title', `%${search.trim()}%`)
+      }
+
+      const { data, error } = await query.order('display_order', { ascending: true })
+      if (error) throw error
+      setBanners(data || [])
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to load banners')
+    } finally {
+      setLoading(false)
+    }
+  }, [search, statusFilter])
+
+  useEffect(() => {
+    fetchBanners()
+  }, [fetchBanners])
+
+  const openCreate = () => {
+    setEditing(null)
+    setImages([])
+    reset({
+      title: '',
+      subtitle: '',
+      badge_text: '',
+      cta_text: 'Shop Now',
+      cta_link: '/products',
+      display_order: 0,
+      is_active: true,
+      bg_color: '#8B0000',
+      text_color: '#FFFFFF',
+      starts_at: '',
+      ends_at: '',
+    })
+    setShowModal(true)
   }
-
-  useEffect(() => { fetchBanners() }, [])
 
   const openEdit = (banner: Banner) => {
     setEditing(banner)
     setImages(banner.image_url ? [banner.image_url] : [])
-    reset({ title: banner.title, subtitle: banner.subtitle || '', badge_text: banner.badge_text || '', cta_text: banner.cta_text, cta_link: banner.cta_link, display_order: banner.display_order })
-    setShowForm(true)
+    reset({
+      title: banner.title,
+      subtitle: banner.subtitle || '',
+      badge_text: banner.badge_text || '',
+      cta_text: banner.cta_text,
+      cta_link: banner.cta_link,
+      display_order: banner.display_order,
+      is_active: banner.is_active,
+      bg_color: banner.bg_color || '#8B0000',
+      text_color: banner.text_color || '#FFFFFF',
+      starts_at: banner.starts_at ? new Date(banner.starts_at).toISOString().slice(0, 16) : '',
+      ends_at: banner.ends_at ? new Date(banner.ends_at).toISOString().slice(0, 16) : '',
+    })
+    setShowModal(true)
   }
 
-  const onSubmit = async (data: BannerForm) => {
-    if (!images[0]) { toast.error('Please upload a banner image'); return }
+  const closeModal = () => {
+    setShowModal(false)
+    setEditing(null)
+    setImages([])
+    reset()
+  }
+
+  const handleImagesChange = (urls: string[]) => {
+    setImages(urls)
+  }
+
+  const onSubmit = async (formData: BannerForm) => {
+    if (images.length === 0) {
+      toast.error('Banner image is required')
+      return
+    }
+
     setSubmitting(true)
     try {
-      const supabase = createClient()
-      const payload = { ...data, image_url: images[0], is_active: true }
-      if (editing) {
-        await supabase.from('banners').update(payload).eq('id', editing.id)
-        toast.success('Banner updated!')
-      } else {
-        await supabase.from('banners').insert(payload)
-        toast.success('Banner created!')
+      const payload = {
+        ...formData,
+        id: editing?.id,
+        image_url: images[0],
+        starts_at: formData.starts_at || null,
+        ends_at: formData.ends_at || null,
+        display_order: Number(formData.display_order),
       }
-      reset(); setImages([]); setEditing(null); setShowForm(false); fetchBanners()
-    } catch (err: any) { toast.error(err.message) } finally { setSubmitting(false) }
+
+      const result = editing
+        ? await updateBannerAction(payload)
+        : await createBannerAction(payload)
+
+      if (!result.success) {
+        toast.error(result.error || 'Operation failed')
+      } else {
+        toast.success(editing ? 'Banner updated!' : 'Banner created!')
+        closeModal()
+        fetchBanners()
+      }
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const deleteBanner = async (id: string) => {
-    if (!confirm('Delete this banner?')) return
-    const supabase = createClient()
-    await supabase.from('banners').delete().eq('id', id)
-    fetchBanners()
-    toast.success('Banner deleted')
+  const handleToggleStatus = async (banner: Banner) => {
+    const result = await toggleBannerStatusAction(banner.id, !banner.is_active)
+    if (!result.success) {
+      toast.error(result.error || 'Failed to update status')
+    } else {
+      toast.success(banner.is_active ? 'Banner deactivated' : 'Banner activated')
+      fetchBanners()
+    }
   }
 
-  const toggleActive = async (banner: Banner) => {
-    const supabase = createClient()
-    await supabase.from('banners').update({ is_active: !banner.is_active }).eq('id', banner.id)
-    fetchBanners()
+  const handleReorder = async (banner: Banner, newOrder: number) => {
+    const val = Number(newOrder)
+    if (isNaN(val) || val < 0) return
+    const result = await reorderBannerAction(banner.id, val)
+    if (!result.success) {
+      toast.error(result.error || 'Failed to update order')
+    } else {
+      fetchBanners()
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    setDeleting(true)
+    try {
+      const result = await deleteBannerAction(deleteId)
+      if (!result.success) {
+        toast.error(result.error || 'Failed to delete banner')
+      } else {
+        toast.success('Banner deleted')
+        fetchBanners()
+      }
+    } finally {
+      setDeleting(false)
+      setDeleteId(null)
+    }
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-heading text-3xl font-bold text-gray-900">Hero Banners</h1>
-        <Button onClick={() => { setShowForm(!showForm); setEditing(null); reset(); setImages([]) }} variant="primary">
-          <PlusCircle className="w-4 h-4" /> {showForm ? 'Cancel' : 'Add Banner'}
-        </Button>
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <AdminPageHeader
+        title="Homepage Hero Banners"
+        description="Configure dynamic slider cards that display at the top of the storefront main page."
+        action={
+          <Button variant="primary" size="sm" onClick={openCreate} id="add-banner-btn">
+            <PlusCircle className="w-4 h-4 mr-1.5" />
+            Add Banner
+          </Button>
+        }
+      />
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        {/* Search */}
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <input
+            id="banners-search"
+            type="text"
+            placeholder="Search banner title…"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value)
+            }}
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red/30 focus:border-brand-red bg-gray-50"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex rounded-xl border border-gray-200 overflow-hidden text-xs font-semibold">
+          {(['all', 'active', 'inactive'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 capitalize transition-colors ${
+                statusFilter === s
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {showForm && (
-        <div className="bg-white rounded-2xl p-6 shadow-card mb-6">
-          <h2 className="font-heading font-bold text-xl mb-5">{editing ? 'Edit Banner' : 'New Banner'}</h2>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="mb-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">Banner Image *</p>
-              <ImageUploader bucket="banner-images" folder="banners" images={images} onImagesChange={setImages} maxFiles={1} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Title *" {...register('title', { required: true })} id="banner-title" />
-              <Input label="Badge Text" placeholder="e.g. NEW ARRIVALS" {...register('badge_text')} id="banner-badge" />
-              <div className="sm:col-span-2"><Input label="Subtitle" {...register('subtitle')} id="banner-subtitle" /></div>
-              <Input label="Button Text" {...register('cta_text')} placeholder="Shop Now" id="banner-cta-text" />
-              <Input label="Button Link" {...register('cta_link')} placeholder="/products" id="banner-cta-link" />
-              <Input label="Display Order" type="number" {...register('display_order')} id="banner-order" />
-            </div>
-            <div className="flex gap-3">
-              <Button type="submit" variant="primary" loading={submitting} id="banner-submit">{editing ? 'Update' : 'Create'} Banner</Button>
-              <Button type="button" variant="outline" onClick={() => { setShowForm(false); reset() }}>Cancel</Button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-4">
+      {/* List Table */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
-          Array.from({ length: 2 }).map((_, i) => <div key={i} className="skeleton h-40 rounded-2xl" />)
-        ) : banners.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center text-gray-400 shadow-card">No banners yet. Add your first hero banner!</div>
-        ) : (
-          banners.map(banner => (
-            <div key={banner.id} className="bg-white rounded-2xl shadow-card overflow-hidden">
-              <div className="flex flex-col sm:flex-row">
-                <div className="w-full sm:w-48 h-32 relative bg-gray-100 flex-shrink-0">
-                  {banner.image_url && <Image src={banner.image_url} alt={banner.title} fill className="object-cover" />}
-                </div>
-                <div className="flex-1 p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      {banner.badge_text && <p className="text-xs font-bold text-brand-gold uppercase tracking-widest mb-1">{banner.badge_text}</p>}
-                      <h3 className="font-heading font-bold text-gray-900">{banner.title}</h3>
-                      {banner.subtitle && <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{banner.subtitle}</p>}
-                      <p className="text-xs text-gray-400 mt-1">Order: {banner.display_order} · CTA: {banner.cta_text} → {banner.cta_link}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button onClick={() => toggleActive(banner)} className={`text-xs font-semibold px-3 py-1.5 rounded-full ${banner.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {banner.is_active ? 'Active' : 'Hidden'}
-                      </button>
-                      <button onClick={() => openEdit(banner)} className="p-2 text-gray-400 hover:text-brand-red hover:bg-red-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
-                      <button onClick={() => deleteBanner(banner.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </div>
+          <div className="divide-y divide-gray-50">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-6 py-4 animate-pulse">
+                <div className="w-20 h-12 bg-gray-100 rounded-lg flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-100 rounded w-1/3" />
+                  <div className="h-3 bg-gray-50 rounded w-1/2" />
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
+        ) : banners.length === 0 ? (
+          <EmptyState
+            icon={ImageIcon}
+            title={search || statusFilter !== 'all' ? 'No banners match filters' : 'No banners yet'}
+            description="Create your first slider hero banner to showcase seasonal combos or category highlights."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Banner Preview
+                  </th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Order
+                  </th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Status
+                  </th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {banners.map((banner) => (
+                  <tr key={banner.id} className="hover:bg-gray-50/60 transition-colors">
+                    {/* Preview details */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-24 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200 relative">
+                          <Image src={banner.image_url} alt={banner.title} fill className="object-cover" />
+                        </div>
+                        <div>
+                          {banner.badge_text && (
+                            <span className="text-[9px] font-bold bg-brand-gold/15 text-[#D97706] border border-[#D97706]/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              {banner.badge_text}
+                            </span>
+                          )}
+                          <h4 className="font-bold text-gray-900 text-sm mt-1">{banner.title}</h4>
+                          <p className="text-xs text-gray-500 truncate max-w-[280px]">{banner.subtitle}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Order */}
+                    <td className="px-4 py-4 text-center">
+                      <input
+                        type="number"
+                        min={0}
+                        defaultValue={banner.display_order}
+                        onBlur={(e) => handleReorder(banner, parseInt(e.target.value, 10))}
+                        className="w-14 text-center text-sm border border-gray-200 rounded-lg py-1 px-1 focus:outline-none focus:ring-2 focus:ring-brand-red/30 focus:border-brand-red"
+                        aria-label={`Display order for ${banner.title}`}
+                      />
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-4 py-4 text-center">
+                      <button
+                        onClick={() => handleToggleStatus(banner)}
+                        aria-label={banner.is_active ? 'Deactivate banner' : 'Activate banner'}
+                        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                          banner.is_active
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {banner.is_active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        {banner.is_active ? 'Active' : 'Inactive'}
+                      </button>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEdit(banner)}
+                          aria-label={`Edit banner`}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand-red hover:bg-red-50 transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteId(banner.id)}
+                          aria-label={`Delete banner`}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
+
+      {/* Editor Modal */}
+      <Modal isOpen={showModal} onClose={closeModal} title={editing ? 'Edit Banner' : 'New Banner'} size="lg">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4" noValidate>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label htmlFor="title" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Banner Title *
+              </label>
+              <Input
+                id="title"
+                placeholder="e.g. Premium Cashew Nuts Sale"
+                {...register('title', { required: 'Title is required' })}
+                error={errors.title?.message}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="subtitle" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Subtitle
+              </label>
+              <Input id="subtitle" placeholder="e.g. Up to 20% off all sizes" {...register('subtitle')} />
+            </div>
+
+            <div>
+              <label htmlFor="badge_text" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Badge Text
+              </label>
+              <Input id="badge_text" placeholder="e.g. LIMITED OFFER" {...register('badge_text')} />
+            </div>
+
+            <div>
+              <label htmlFor="cta_text" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                CTA Text *
+              </label>
+              <Input id="cta_text" {...register('cta_text', { required: true })} />
+            </div>
+
+            <div>
+              <label htmlFor="cta_link" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                CTA Link *
+              </label>
+              <Input id="cta_link" {...register('cta_link', { required: true })} />
+            </div>
+
+            <div>
+              <label htmlFor="bg_color" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                BG Color Hex
+              </label>
+              <Input id="bg_color" placeholder="#8B0000" {...register('bg_color')} />
+            </div>
+
+            <div>
+              <label htmlFor="text_color" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Text Color Hex
+              </label>
+              <Input id="text_color" placeholder="#FFFFFF" {...register('text_color')} />
+            </div>
+
+            <div>
+              <label htmlFor="starts_at" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Starts At (Scheduling)
+              </label>
+              <Input id="starts_at" type="datetime-local" {...register('starts_at')} />
+            </div>
+
+            <div>
+              <label htmlFor="ends_at" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Ends At (Scheduling)
+              </label>
+              <Input id="ends_at" type="datetime-local" {...register('ends_at')} />
+            </div>
+
+            <div>
+              <label htmlFor="display_order" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Display Order
+              </label>
+              <Input id="display_order" type="number" {...register('display_order')} />
+            </div>
+
+            <div className="flex items-center gap-2 pt-6">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input id="is_active" type="checkbox" {...register('is_active')} className="w-4 h-4 rounded accent-brand-red" />
+                <span className="text-sm font-semibold text-gray-700">Active</span>
+              </label>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Banner Image *
+              </label>
+              <ImageUploader bucket="banner-images" folder="hero" images={images} onImagesChange={handleImagesChange} maxFiles={1} />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+            <Button type="button" variant="outline" size="sm" onClick={closeModal} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="sm" loading={submitting}>
+              {editing ? 'Save Changes' : 'Create Banner'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Delete Banner"
+        message={`Are you sure you want to delete this hero banner?\n\nThis slider card will immediately disappear from the homepage storefront.`}
+        confirmText="Delete Card"
+        cancelText="Cancel"
+        variant="danger"
+        loading={deleting}
+      />
     </div>
   )
 }

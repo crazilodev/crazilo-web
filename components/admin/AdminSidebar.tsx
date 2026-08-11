@@ -15,30 +15,18 @@ import { createClient } from '@/lib/supabase/client'
 const navGroups = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
   {
-    label: 'Catalog',
+    label: 'Commerce',
     icon: Package,
     children: [
-      { icon: Tags, label: 'Categories', href: '/admin/categories' },
       { icon: Package, label: 'Products', href: '/admin/products' },
+      { icon: Tags, label: 'Categories', href: '/admin/categories' },
       { icon: AlertOctagon, label: 'Inventory', href: '/admin/inventory' },
-    ],
-  },
-  {
-    label: 'Orders',
-    icon: ShoppingBag,
-    children: [
-      { icon: ShoppingBag, label: 'All Orders', href: '/admin/orders' },
-    ],
-  },
-  {
-    label: 'Customers',
-    icon: Users,
-    children: [
+      { icon: ShoppingBag, label: 'Orders', href: '/admin/orders' },
       { icon: Users, label: 'Customers', href: '/admin/customers' },
     ],
   },
   {
-    label: 'Content',
+    label: 'Content CMS',
     icon: ImageIcon,
     children: [
       { icon: ImageIcon, label: 'Banners', href: '/admin/banners' },
@@ -56,9 +44,15 @@ const navGroups = [
       { icon: Mail, label: 'Newsletter', href: '/admin/marketing/newsletter' },
     ],
   },
-  { icon: MessageSquare, label: 'Reviews', href: '/admin/reviews' },
   {
-    label: 'Settings',
+    label: 'Community',
+    icon: MessageSquare,
+    children: [
+      { icon: MessageSquare, label: 'Reviews', href: '/admin/reviews' },
+    ],
+  },
+  {
+    label: 'Configuration',
     icon: Settings,
     children: [
       { icon: Settings, label: 'Site Settings', href: '/admin/settings' },
@@ -71,6 +65,7 @@ export default function AdminSidebar() {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const [pendingCounts, setPendingCounts] = useState({ orders: 0, reviews: 0 })
 
   useEffect(() => {
     const groupsToOpen: Record<string, boolean> = {}
@@ -86,6 +81,29 @@ export default function AdminSidebar() {
       }
     })
     setOpenGroups((prev) => ({ ...prev, ...groupsToOpen }))
+  }, [pathname])
+
+  // Fetch pending review and pending order metrics for badges
+  useEffect(() => {
+    const fetchPendingCounts = async () => {
+      try {
+        const supabase = createClient()
+        const [
+          { count: pendingOrders },
+          { count: pendingReviews }
+        ] = await Promise.all([
+          supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('is_approved', false)
+        ])
+        setPendingCounts({
+          orders: pendingOrders || 0,
+          reviews: pendingReviews || 0
+        })
+      } catch {
+        // Safe silent fail
+      }
+    }
+    fetchPendingCounts()
   }, [pathname])
 
   const handleSignOut = async () => {
@@ -132,7 +150,7 @@ export default function AdminSidebar() {
               group.href === '/admin'
                 ? pathname === '/admin'
                 : pathname.startsWith(group.href!)
-                
+                 
             return (
               <Link
                 key={group.href}
@@ -180,7 +198,12 @@ export default function AdminSidebar() {
                 <div className="pl-4 space-y-1 transition-all duration-200">
                   {group.children.map((child) => {
                     const ChildIcon = child.icon
-                    const isChildActive = pathname.startsWith(child.href)
+                    const isChildActive = pathname === child.href || (child.href !== '/admin' && pathname.startsWith(child.href))
+
+                    // Dynamically map counts to badges for Orders & Reviews
+                    let badgeCount = 0
+                    if (child.label === 'Orders') badgeCount = pendingCounts.orders
+                    if (child.label === 'Reviews') badgeCount = pendingCounts.reviews
 
                     return (
                       <Link
@@ -194,7 +217,14 @@ export default function AdminSidebar() {
                         }`}
                       >
                         {ChildIcon && <ChildIcon className="w-4 h-4 flex-shrink-0" />}
-                        <span>{child.label}</span>
+                        <span className="flex-1 text-left">{child.label}</span>
+                        {badgeCount > 0 && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            isChildActive ? 'bg-white text-brand-red' : 'bg-brand-red text-white'
+                          }`}>
+                            {badgeCount}
+                          </span>
+                        )}
                       </Link>
                     )
                   })}

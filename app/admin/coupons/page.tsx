@@ -1,13 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
-import { PlusCircle, Edit, Trash2, Tag } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { Coupon } from '@/types'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
+import EmptyState from '@/components/admin/EmptyState'
+import ConfirmDialog from '@/components/admin/ConfirmDialog'
+import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import { Tag, PlusCircle, Edit, Trash2, Search, Eye, EyeOff } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { Coupon } from '@/types'
 import { formatPrice } from '@/lib/utils/formatPrice'
+import {
+  createCouponAction,
+  updateCouponAction,
+  deleteCouponAction,
+  toggleCouponStatusAction,
+} from './actions'
 import toast from 'react-hot-toast'
 
 interface CouponForm {
@@ -18,144 +28,446 @@ interface CouponForm {
   minimum_order_amount: number
   maximum_discount: number
   usage_limit: number
+  is_active: boolean
+  starts_at: string
   expires_at: string
 }
 
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+
+  // Form & modal state
+  const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Coupon | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const { register, handleSubmit, reset, watch } = useForm<CouponForm>({
-    defaultValues: { discount_type: 'percentage', minimum_order_amount: 0 }
+
+  // Delete state
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<CouponForm>({
+    defaultValues: {
+      discount_type: 'percentage',
+      minimum_order_amount: 0,
+      is_active: true,
+      starts_at: new Date().toISOString().slice(0, 16),
+    },
   })
+
   const discountType = watch('discount_type')
 
-  const fetchCoupons = async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('coupons').select('*').order('created_at', { ascending: false })
-    setCoupons(data || [])
-    setLoading(false)
-  }
-
-  useEffect(() => { fetchCoupons() }, [])
-
-  const onSubmit = async (data: CouponForm) => {
-    setSubmitting(true)
+  const fetchCoupons = useCallback(async () => {
+    setLoading(true)
     try {
       const supabase = createClient()
-      const payload = { ...data, code: data.code.toUpperCase(), is_active: true }
-      if (editing) {
-        await supabase.from('coupons').update(payload).eq('id', editing.id)
-        toast.success('Coupon updated!')
-      } else {
-        await supabase.from('coupons').insert(payload)
-        toast.success('Coupon created!')
+      let query = supabase.from('coupons').select('*')
+
+      if (statusFilter === 'active') {
+        query = query.eq('is_active', true)
+      } else if (statusFilter === 'inactive') {
+        query = query.eq('is_active', false)
       }
-      reset(); setEditing(null); setShowForm(false); fetchCoupons()
-    } catch (err: any) { toast.error(err.message) } finally { setSubmitting(false) }
+
+      if (search.trim()) {
+        query = query.ilike('code', `%${search.trim()}%`)
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false })
+      if (error) throw error
+      setCoupons(data || [])
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to load coupons')
+    } finally {
+      setLoading(false)
+    }
+  }, [search, statusFilter])
+
+  useEffect(() => {
+    fetchCoupons()
+  }, [fetchCoupons])
+
+  const openCreate = () => {
+    setEditing(null)
+    reset({
+      code: '',
+      description: '',
+      discount_type: 'percentage',
+      discount_value: 0,
+      minimum_order_amount: 0,
+      maximum_discount: 0,
+      usage_limit: 0,
+      is_active: true,
+      starts_at: new Date().toISOString().slice(0, 16),
+      expires_at: '',
+    })
+    setShowModal(true)
   }
 
-  const deleteCoupon = async (id: string) => {
-    if (!confirm('Delete this coupon?')) return
-    const supabase = createClient()
-    await supabase.from('coupons').delete().eq('id', id)
-    fetchCoupons()
-    toast.success('Coupon deleted')
+  const openEdit = (coupon: Coupon) => {
+    setEditing(coupon)
+    reset({
+      code: coupon.code,
+      description: coupon.description || '',
+      discount_type: coupon.discount_type as 'percentage' | 'fixed',
+      discount_value: Number(coupon.discount_value),
+      minimum_order_amount: Number(coupon.minimum_order_amount),
+      maximum_discount: coupon.maximum_discount ? Number(coupon.maximum_discount) : 0,
+      usage_limit: coupon.usage_limit ? Number(coupon.usage_limit) : 0,
+      is_active: coupon.is_active,
+      starts_at: coupon.starts_at ? new Date(coupon.starts_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+      expires_at: coupon.expires_at ? new Date(coupon.expires_at).toISOString().slice(0, 16) : '',
+    })
+    setShowModal(true)
   }
 
-  const toggleActive = async (coupon: Coupon) => {
-    const supabase = createClient()
-    await supabase.from('coupons').update({ is_active: !coupon.is_active }).eq('id', coupon.id)
-    fetchCoupons()
+  const closeModal = () => {
+    setShowModal(false)
+    setEditing(null)
+    reset()
+  }
+
+  const onSubmit = async (formData: CouponForm) => {
+    setSubmitting(true)
+    try {
+      const payload = {
+        ...formData,
+        id: editing?.id,
+        discount_value: Number(formData.discount_value),
+        minimum_order_amount: Number(formData.minimum_order_amount),
+        maximum_discount: formData.maximum_discount ? Number(formData.maximum_discount) : null,
+        usage_limit: formData.usage_limit ? Number(formData.usage_limit) : null,
+        expires_at: formData.expires_at || null,
+      }
+
+      const result = editing
+        ? await updateCouponAction(payload)
+        : await createCouponAction(payload)
+
+      if (!result.success) {
+        toast.error(result.error || 'Operation failed')
+      } else {
+        toast.success(editing ? 'Coupon updated!' : 'Coupon created!')
+        closeModal()
+        fetchCoupons()
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleToggleStatus = async (coupon: Coupon) => {
+    const result = await toggleCouponStatusAction(coupon.id, !coupon.is_active)
+    if (!result.success) {
+      toast.error(result.error || 'Failed to update coupon status')
+    } else {
+      toast.success(coupon.is_active ? 'Coupon deactivated' : 'Coupon activated')
+      fetchCoupons()
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    setDeleting(true)
+    try {
+      const result = await deleteCouponAction(deleteId)
+      if (!result.success) {
+        toast.error(result.error || 'Failed to delete coupon')
+      } else {
+        toast.success('Coupon deleted successfully!')
+        fetchCoupons()
+      }
+    } finally {
+      setDeleting(false)
+      setDeleteId(null)
+    }
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-heading text-3xl font-bold text-gray-900">Coupons</h1>
-        <Button onClick={() => { setShowForm(!showForm); setEditing(null); reset() }} variant="primary">
-          <PlusCircle className="w-4 h-4" /> {showForm ? 'Cancel' : 'Add Coupon'}
-        </Button>
-      </div>
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <AdminPageHeader
+        title="Coupons"
+        description="Configure percentage or fixed amount promo codes to discount checkout cart prices."
+        action={
+          <Button variant="primary" size="sm" onClick={openCreate} id="add-coupon-btn">
+            <PlusCircle className="w-4 h-4 mr-1.5" />
+            Add Coupon
+          </Button>
+        }
+      />
 
-      {showForm && (
-        <div className="bg-white rounded-2xl p-6 shadow-card mb-6">
-          <h2 className="font-heading font-bold text-xl mb-5">{editing ? 'Edit Coupon' : 'New Coupon'}</h2>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Coupon Code *" placeholder="e.g. CRAZILO10" {...register('code', { required: true })} id="coupon-code" />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Discount Type</label>
-                <select {...register('discount_type')} className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm input-brand" id="coupon-type">
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount (₹)</option>
-                </select>
-              </div>
-              <Input label={`Discount Value (${discountType === 'percentage' ? '%' : '₹'}) *`} type="number" step="0.01" {...register('discount_value', { required: true })} id="coupon-value" />
-              <Input label="Minimum Order Amount (₹)" type="number" {...register('minimum_order_amount')} id="coupon-min" />
-              <Input label="Maximum Discount (₹)" type="number" {...register('maximum_discount')} id="coupon-max" />
-              <Input label="Usage Limit" type="number" {...register('usage_limit')} placeholder="Leave blank for unlimited" id="coupon-limit" />
-              <div className="sm:col-span-2"><Input label="Description" {...register('description')} id="coupon-desc" /></div>
-              <Input label="Expires At" type="datetime-local" {...register('expires_at')} id="coupon-expires" />
-            </div>
-            <div className="flex gap-3">
-              <Button type="submit" variant="primary" loading={submitting} id="coupon-submit">{editing ? 'Update' : 'Create'} Coupon</Button>
-              <Button type="button" variant="outline" onClick={() => { setShowForm(false); reset() }}>Cancel</Button>
-            </div>
-          </form>
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        {/* Search */}
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <input
+            id="coupons-search"
+            type="text"
+            placeholder="Search promo code…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red/30 focus:border-brand-red bg-gray-50"
+          />
         </div>
-      )}
 
-      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
-        <table className="w-full data-table">
-          <thead><tr>
-            <th className="px-5 py-3 text-left">Code</th>
-            <th className="px-5 py-3 text-left">Discount</th>
-            <th className="px-5 py-3 text-left">Min Order</th>
-            <th className="px-5 py-3 text-left">Used / Limit</th>
-            <th className="px-5 py-3 text-left">Expires</th>
-            <th className="px-5 py-3 text-left">Status</th>
-            <th className="px-5 py-3 text-left">Actions</th>
-          </tr></thead>
-          <tbody>
-            {loading ? (
-              Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={7} className="px-5 py-4"><div className="skeleton h-5 rounded" /></td></tr>)
-            ) : coupons.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-12 text-gray-400">No coupons yet</td></tr>
-            ) : (
-              coupons.map(coupon => (
-                <tr key={coupon.id} className="border-t border-gray-50 hover:bg-gray-50">
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <Tag className="w-3.5 h-3.5 text-brand-gold" />
-                      <span className="font-mono font-bold text-sm text-gray-900">{coupon.code}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-sm font-semibold text-brand-red">
-                    {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : formatPrice(coupon.discount_value)}
-                  </td>
-                  <td className="px-5 py-3 text-sm text-gray-500">{formatPrice(coupon.minimum_order_amount)}</td>
-                  <td className="px-5 py-3 text-sm text-gray-600">{coupon.used_count} / {coupon.usage_limit || '∞'}</td>
-                  <td className="px-5 py-3 text-sm text-gray-500">{coupon.expires_at ? new Date(coupon.expires_at).toLocaleDateString('en-IN') : '—'}</td>
-                  <td className="px-5 py-3">
-                    <button onClick={() => toggleActive(coupon)} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${coupon.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {coupon.is_active ? 'Active' : 'Inactive'}
-                    </button>
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => { setEditing(coupon); setShowForm(true) }} className="p-1.5 text-gray-400 hover:text-brand-red hover:bg-red-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
-                      <button onClick={() => deleteCoupon(coupon.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        {/* Filters */}
+        <div className="flex rounded-xl border border-gray-200 overflow-hidden text-xs font-semibold">
+          {(['all', 'active', 'inactive'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 capitalize transition-colors ${
+                statusFilter === s
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="divide-y divide-gray-50">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between px-6 py-4 animate-pulse">
+                <div className="h-4 bg-gray-100 rounded w-1/3" />
+                <div className="h-4 bg-gray-100 rounded w-20" />
+              </div>
+            ))}
+          </div>
+        ) : coupons.length === 0 ? (
+          <EmptyState
+            icon={Tag}
+            title={search || statusFilter !== 'all' ? 'No coupons match filters' : 'No coupons yet'}
+            description="Create your first discount promo code to launch sales campaigns."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="px-5 py-3 text-left">Code</th>
+                  <th className="px-5 py-3 text-left">Discount</th>
+                  <th className="px-5 py-3 text-left">Min Order</th>
+                  <th className="px-5 py-3 text-left">Used / Limit</th>
+                  <th className="px-5 py-3 text-left">Expires</th>
+                  <th className="px-5 py-3 text-center">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {coupons.map((coupon) => (
+                  <tr key={coupon.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-3.5 h-3.5 text-brand-gold" />
+                        <span className="font-mono font-bold text-sm text-gray-900">{coupon.code}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-sm font-semibold text-brand-red">
+                      {coupon.discount_type === 'percentage'
+                        ? `${coupon.discount_value}%`
+                        : formatPrice(Number(coupon.discount_value))}
+                    </td>
+                    <td className="px-5 py-3 text-sm text-gray-500">
+                      {formatPrice(Number(coupon.minimum_order_amount))}
+                    </td>
+                    <td className="px-5 py-3 text-sm text-gray-600">
+                      {coupon.used_count} / {coupon.usage_limit || '∞'}
+                    </td>
+                    <td className="px-5 py-3 text-sm text-gray-500">
+                      {coupon.expires_at
+                        ? new Date(coupon.expires_at).toLocaleDateString('en-IN')
+                        : '—'}
+                    </td>
+                    <td className="px-5 py-3 text-center">
+                      <button
+                        onClick={() => handleToggleStatus(coupon)}
+                        aria-label={coupon.is_active ? 'Deactivate coupon' : 'Activate coupon'}
+                        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                          coupon.is_active
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {coupon.is_active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        {coupon.is_active ? 'Active' : 'Inactive'}
+                      </button>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEdit(coupon)}
+                          aria-label="Edit coupon"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand-red hover:bg-red-50 transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteId(coupon.id)}
+                          aria-label="Delete coupon"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Editor Modal */}
+      <Modal isOpen={showModal} onClose={closeModal} title={editing ? 'Edit Coupon' : 'New Coupon'} size="lg">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4" noValidate>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="code" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Promo Code *
+              </label>
+              <Input
+                id="code"
+                placeholder="e.g. CRAZILO20"
+                {...register('code', { required: 'Code is required' })}
+                error={errors.code?.message}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="discount_type" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Discount Type *
+              </label>
+              <select
+                id="discount_type"
+                {...register('discount_type')}
+                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm input-brand bg-white"
+              >
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (₹)</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="discount_value" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Discount Value *
+              </label>
+              <Input
+                id="discount_value"
+                type="number"
+                step="0.01"
+                {...register('discount_value', {
+                  required: 'Discount value is required',
+                  valueAsNumber: true,
+                  min: { value: 0.01, message: 'Discount must be positive' },
+                })}
+                error={errors.discount_value?.message}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="minimum_order_amount" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Min Order Amount (₹) *
+              </label>
+              <Input
+                id="minimum_order_amount"
+                type="number"
+                {...register('minimum_order_amount', {
+                  required: 'Min order is required',
+                  valueAsNumber: true,
+                  min: { value: 0, message: 'Min order must be at least 0' },
+                })}
+                error={errors.minimum_order_amount?.message}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="maximum_discount" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Max Discount Limit (₹)
+              </label>
+              <Input id="maximum_discount" type="number" {...register('maximum_discount')} />
+            </div>
+
+            <div>
+              <label htmlFor="usage_limit" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Usage Limit Count
+              </label>
+              <Input id="usage_limit" type="number" placeholder="Unlimited if blank" {...register('usage_limit')} />
+            </div>
+
+            <div>
+              <label htmlFor="starts_at" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Starts At *
+              </label>
+              <Input
+                id="starts_at"
+                type="datetime-local"
+                {...register('starts_at', { required: 'Start time is required' })}
+                error={errors.starts_at?.message}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="expires_at" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Expires At
+              </label>
+              <Input id="expires_at" type="datetime-local" {...register('expires_at')} />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label htmlFor="description" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Description
+              </label>
+              <Input id="description" placeholder="e.g. 10% off on all gift combos" {...register('description')} />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input id="is_active" type="checkbox" {...register('is_active')} className="w-4 h-4 rounded accent-brand-red" />
+                <span className="text-sm font-semibold text-gray-700">Active</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+            <Button type="button" variant="outline" size="sm" onClick={closeModal} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="sm" loading={submitting}>
+              {editing ? 'Save Changes' : 'Create Coupon'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Delete Coupon"
+        message="Are you sure you want to delete this coupon?\n\nIt will immediately be removed. If this coupon is already referenced by existing checkout orders, deletion will fail to protect historical order records."
+        confirmText="Delete Coupon"
+        cancelText="Cancel"
+        variant="danger"
+        loading={deleting}
+      />
     </div>
   )
 }
