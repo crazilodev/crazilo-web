@@ -91,3 +91,53 @@ export async function getHomeHighlights(
   if (error) throw error
   return (data || []) as HomeHighlight[]
 }
+
+export async function getAdminTestimonialsList(
+  supabase: any,
+  options?: {
+    search?: string
+    status?: 'all' | 'active' | 'inactive'
+  }
+): Promise<Testimonial[]> {
+  let query = supabase.from('testimonials').select('*')
+
+  if (options?.status === 'active') {
+    query = query.eq('is_active', true)
+  } else if (options?.status === 'inactive') {
+    query = query.eq('is_active', false)
+  }
+
+  if (options?.search) {
+    const searchVal = `%${options.search}%`
+    query = query.or(`name.ilike.${searchVal},location.ilike.${searchVal},product_name.ilike.${searchVal},text.ilike.${searchVal}`)
+  }
+
+  const { data, error } = await query.order('display_order', { ascending: true })
+  if (error) throw error
+  return (data || []) as Testimonial[]
+}
+
+export async function getAdminHomeHighlightsList(
+  supabase: any,
+  options?: {
+    search?: string
+    status?: 'all' | 'active' | 'inactive'
+  }
+): Promise<HomeHighlight[]> {
+  let query = supabase.from('home_highlights').select('*')
+
+  if (options?.status === 'active') {
+    query = query.eq('is_active', true)
+  } else if (options?.status === 'inactive') {
+    query = query.eq('is_active', false)
+  }
+
+  if (options?.search) {
+    const searchVal = `%${options.search}%`
+    query = query.or(`title.ilike.${searchVal},description.ilike.${searchVal},icon_key.ilike.${searchVal}`)
+  }
+
+  const { data, error } = await query.order('display_order', { ascending: true })
+  if (error) throw error
+  return (data || []) as HomeHighlight[]
+}
