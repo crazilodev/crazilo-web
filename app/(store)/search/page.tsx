@@ -6,6 +6,7 @@ import { Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Product } from '@/types'
 import ProductGrid from '@/components/products/ProductGrid'
+import { getActiveProducts } from '@/lib/data/catalog'
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
@@ -18,13 +19,8 @@ export default function SearchPage() {
     const fetch = async () => {
       setLoading(true)
       const supabase = createClient()
-      const { data } = await supabase
-        .from('products')
-        .select('*, category:categories(*)')
-        .eq('is_active', true)
-        .ilike('name', `%${query}%`)
-        .order('created_at', { ascending: false })
-      setProducts(data || [])
+      const data = await getActiveProducts(supabase, { search: query, sort: 'newest' })
+      setProducts(data)
       setLoading(false)
     }
     fetch()

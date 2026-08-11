@@ -40,45 +40,31 @@ export default function CheckoutPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login?redirect=/checkout'); return }
 
-      const { data: order, error } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          shipping_address: data.shipping_address,
-          billing_address: data.same_as_shipping ? data.shipping_address : data.billing_address,
-          subtotal: totalPrice,
-          shipping_amount: shipping,
-          tax_amount: 0,
-          discount_amount: 0,
-          total_amount: grandTotal,
-          status: 'pending',
-          payment_status: 'pending',
-          payment_method: data.payment_method,
-          customer_notes: data.customer_notes,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Insert order items
       const orderItems = items.map((item) => ({
-        order_id: order.id,
         product_id: item.product.id,
         variant_id: item.variant?.id || null,
-        product_name: item.product.name,
-        variant_name: item.variant?.name || null,
-        sku: item.variant?.sku || item.product.sku,
-        thumbnail_url: item.product.thumbnail_url,
         quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.price * item.quantity,
       }))
 
-      await supabase.from('order_items').insert(orderItems)
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shipping_address: data.shipping_address,
+          billing_address: data.same_as_shipping ? data.shipping_address : data.billing_address,
+          items: orderItems,
+          coupon_code: data.coupon_code,
+          customer_notes: data.customer_notes,
+          payment_method: data.payment_method,
+        }),
+      })
+
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Failed to place order')
+
       clearCart()
       toast.success('Order placed successfully!')
-      router.push(`/orders?success=${order.order_number}`)
+      router.push(`/orders?success=${result.order_number}`)
     } catch (err: any) {
       toast.error(err.message || 'Failed to place order')
     } finally {

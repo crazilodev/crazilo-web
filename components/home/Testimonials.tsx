@@ -3,57 +3,16 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react'
+import type { Testimonial } from '@/types'
 
-const testimonials = [
-  {
-    id: 1,
-    name: 'Priya Sharma',
-    location: 'Mumbai',
-    rating: 5,
-    text: 'The quality of almonds and cashews from Crazilo is absolutely amazing! Fresh, crunchy and so tasty. My family has made this our go-to brand for all dry fruits.',
-    product: 'Premium Almonds',
-    avatar: 'P',
-  },
-  {
-    id: 2,
-    name: 'Rahul Mehta',
-    location: 'Delhi',
-    rating: 5,
-    text: 'Ordered the spice combo and it arrived fresh and beautifully packaged. The smell alone tells you these are genuine quality spices. Will order again!',
-    product: 'Spice Combo Pack',
-    avatar: 'R',
-  },
-  {
-    id: 3,
-    name: 'Anita Patel',
-    location: 'Ahmedabad',
-    rating: 5,
-    text: 'I was skeptical at first but after one order I\'m hooked! The makhana is so crispy and fresh. Great prices too. Highly recommend Crazilo to everyone.',
-    product: 'Premium Makhana',
-    avatar: 'A',
-  },
-  {
-    id: 4,
-    name: 'Vikram Singh',
-    location: 'Bangalore',
-    rating: 5,
-    text: 'Fast delivery and amazing packaging. The gift box I ordered for Diwali was a huge hit with everyone. Crazilo has become my default gifting choice!',
-    product: 'Premium Gift Box',
-    avatar: 'V',
-  },
-  {
-    id: 5,
-    name: 'Meera Krishnan',
-    location: 'Chennai',
-    rating: 4,
-    text: 'Love the variety and quality. The trail mix is perfect for my morning snack. Customer service was very responsive when I had a query. Great brand!',
-    product: 'Trail Mix Combo',
-    avatar: 'M',
-  },
-]
+interface TestimonialsProps {
+  testimonials: Testimonial[]
+}
 
-export default function Testimonials() {
+export default function Testimonials({ testimonials }: TestimonialsProps) {
   const [current, setCurrent] = useState(0)
+
+  if (testimonials.length === 0) return null
 
   const prev = () => setCurrent((c) => (c - 1 + testimonials.length) % testimonials.length)
   const next = () => setCurrent((c) => (c + 1) % testimonials.length)
@@ -66,7 +25,41 @@ export default function Testimonials() {
 
   return (
     <section className="py-20 bg-brand-dark overflow-hidden">
+      <style>{`
+        :root {
+          --card-w: 280px;
+          --card-gap: 16px;
+          --copy-w: calc(5 * (var(--card-w) + var(--card-gap)));
+        }
+        @media (min-width: 640px) {
+          :root {
+            --card-w: 310px;
+            --card-gap: 18px;
+          }
+        }
+        @media (min-width: 1024px) {
+          :root {
+            --card-w: 360px;
+            --card-gap: 20px;
+          }
+        }
+        @keyframes marquee-seamless {
+          0%   { transform: translateX(0px); }
+          100% { transform: translateX(calc(-1 * var(--copy-w))); }
+        }
+        .marquee-inner {
+          display: flex;
+          width: max-content;
+          animation: marquee-seamless 20s linear infinite;
+          will-change: transform;
+        }
+        .marquee-inner.paused {
+          animation-play-state: paused;
+        }
+      `}</style>
+
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -80,7 +73,6 @@ export default function Testimonials() {
           <div className="divider-gold w-20 mx-auto mt-3" />
         </motion.div>
 
-        {/* Mobile: Single card */}
         <div className="lg:hidden">
           <motion.div
             key={current}
@@ -93,7 +85,6 @@ export default function Testimonials() {
           </motion.div>
         </div>
 
-        {/* Desktop: Three cards */}
         <div className="hidden lg:grid grid-cols-3 gap-6">
           {visible.map((review, i) => (
             <motion.div
@@ -112,7 +103,6 @@ export default function Testimonials() {
           ))}
         </div>
 
-        {/* Navigation */}
         <div className="flex items-center justify-center gap-4 mt-10">
           <button
             onClick={prev}
@@ -126,10 +116,12 @@ export default function Testimonials() {
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                className={`transition-all rounded-full ${
-                  i === current ? 'w-6 h-2.5 bg-brand-gold' : 'w-2.5 h-2.5 bg-white/30'
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  i === current
+                    ? 'bg-brand-red scale-125'
+                    : 'bg-white/30 hover:bg-white/50'
                 }`}
-                aria-label={`Go to ${i + 1}`}
+                aria-label={`Go to review ${i + 1}`}
               />
             ))}
           </div>
@@ -146,30 +138,32 @@ export default function Testimonials() {
   )
 }
 
-function TestimonialCard({ review, dark = false }: { review: typeof testimonials[0]; dark?: boolean }) {
+function TestimonialCard({ review, dark = false }: { review: Testimonial; dark?: boolean }) {
   return (
     <div className="flex flex-col h-full">
-      <Quote className={`w-8 h-8 mb-4 ${dark ? 'text-brand-gold/40' : 'text-brand-gold'}`} />
-      <p className={`text-sm leading-relaxed mb-6 flex-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
+      <Quote className="w-6 h-6 sm:w-8 sm:h-8 mb-3 sm:mb-4 text-brand-gold/60" />
+      <p className="text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 flex-1 text-gray-300">
         &ldquo;{review.text}&rdquo;
       </p>
       <div>
         <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${dark ? 'text-brand-gold/60' : 'text-brand-gold'}`}>
-          {review.product}
+          {review.product_name}
         </p>
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${dark ? 'bg-brand-red/80' : 'bg-brand-red'}`}>
-            {review.avatar}
+            {review.avatar_initial}
           </div>
           <div>
-            <p className={`font-semibold text-sm ${dark ? 'text-white' : 'text-gray-900'}`}>{review.name}</p>
-            <p className={`text-xs ${dark ? 'text-gray-500' : 'text-gray-400'}`}>{review.location}</p>
+            <p className="font-semibold text-xs sm:text-sm text-white">{review.name}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">{review.location}</p>
           </div>
-          <div className="ml-auto flex">
+          <div className="ml-auto flex gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-brand-gold text-brand-gold' : 'fill-gray-200 text-gray-200'}`}
+                className={`w-3.5 h-3.5 ${
+                  i < review.rating ? 'fill-brand-gold text-brand-gold' : 'fill-gray-200 text-gray-200'
+                }`}
               />
             ))}
           </div>

@@ -8,6 +8,7 @@ import { User, Mail, Phone, Save, Shield } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import toast from 'react-hot-toast'
+import { getProfileById, updateProfileContactInfo } from '@/lib/data/profiles'
 
 export default function AccountPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -19,7 +20,7 @@ export default function AccountPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      const data = await getProfileById(supabase, user.id)
       if (data) { setProfile(data); reset(data) }
     }
     fetchProfile()
@@ -31,8 +32,7 @@ export default function AccountPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { error } = await supabase.from('profiles').update({ full_name: data.full_name, phone: data.phone }).eq('id', user.id)
-      if (error) throw error
+      await updateProfileContactInfo(supabase, user.id, data.full_name || null, data.phone || null)
       toast.success('Profile updated!')
     } catch (err: any) {
       toast.error(err.message || 'Update failed')

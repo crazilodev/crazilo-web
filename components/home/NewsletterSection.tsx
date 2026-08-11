@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Mail, Loader2, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { subscribeToNewsletter } from '@/lib/data/newsletter'
 
 export default function NewsletterSection() {
   const [email, setEmail] = useState('')
@@ -19,11 +20,7 @@ export default function NewsletterSection() {
 
     try {
       const supabase = createClient()
-      const { error: err } = await supabase
-        .from('newsletter_subscribers')
-        .upsert({ email, is_active: true }, { onConflict: 'email' })
-
-      if (err && !err.message.includes('duplicate')) throw err
+      await subscribeToNewsletter(supabase, email)
       setSuccess(true)
       setEmail('')
     } catch {

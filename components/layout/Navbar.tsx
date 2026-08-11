@@ -14,6 +14,8 @@ import { useCartStore } from '@/lib/store/cartStore'
 import { useWishlistStore } from '@/lib/store/wishlistStore'
 import { Category, Profile } from '@/types'
 import type { User as SupaUser } from '@supabase/supabase-js'
+import { getMainCategories, getSubcategories } from '@/lib/data/categories'
+import { getProfileById } from '@/lib/data/profiles'
 
 export default function Navbar() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -32,14 +34,17 @@ export default function Navbar() {
   useEffect(() => {
     const supabase = createClient()
     const fetchData = async () => {
-      const [{ data: cats }, { data: { user: u } }] = await Promise.all([
-        supabase.from('categories').select('*').eq('is_active', true).order('display_order').limit(10),
-        supabase.auth.getUser(),
-      ])
-      if (cats) setCategories(cats)
+      const { data: { user: u } } = await supabase.auth.getUser()
+
+      const mainCategories = await getMainCategories(supabase)
+      const nestedSubcategories = await Promise.all(
+        mainCategories.map((category) => getSubcategories(supabase, category.id))
+      )
+      setCategories([...mainCategories, ...nestedSubcategories.flat()])
+
       if (u) {
         setUser(u)
-        const { data: prof } = await supabase.from('profiles').select('*').eq('id', u.id).single()
+        const prof = await getProfileById(supabase, u.id)
         if (prof) setProfile(prof)
       }
     }
@@ -71,6 +76,13 @@ export default function Navbar() {
     { label: 'GIFTS', href: '/category/gift-boxes', hasDropdown: false },
     { label: 'OFFERS', href: '/products?tag=sale', hasDropdown: false, isSpecial: true },
   ]
+
+  const mainCategories = categories.filter((cat) => !cat.parent_id)
+  const subcategoriesByParent = categories.reduce<Record<string, Category[]>>((acc, cat) => {
+    if (!cat.parent_id) return acc
+    acc[cat.parent_id] = [...(acc[cat.parent_id] || []), cat]
+    return acc
+  }, {})
 
   return (
     <header className="sticky top-0 z-50 bg-[#FFFDF9] border-b border-[#EFE7DD] shadow-sm transition-all duration-200">
@@ -109,28 +121,26 @@ export default function Navbar() {
 
                 {/* Dropdown Menu for Categories */}
                 {item.hasDropdown && (
-                  <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 py-2 z-50">
-                    {categories.length > 0 ? (
-                      categories.map((cat) => (
+                    <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 py-2 z-50">
+                    {mainCategories.map((cat) => (
+                      <div key={cat.id}>
                         <Link
-                          key={cat.id}
                           href={`/category/${cat.slug}`}
-                          className="block px-4 py-2 text-xs font-bold text-gray-800 hover:text-[#A61919] hover:bg-[#FFF8F0]"
+                          className="block px-4 py-2 text-xs font-extrabold text-gray-800 hover:text-[#A61919] hover:bg-[#FFF8F0]"
                         >
                           {cat.name.toUpperCase()}
                         </Link>
-                      ))
-                    ) : (
-                      ['CASHEWS', 'ALMONDS', 'PISTACHIOS', 'WALNUTS', 'RAISINS', 'DATES', 'DRIED BERRIES'].map((cat) => (
-                        <Link
-                          key={cat}
-                          href={`/category/dry-fruits`}
-                          className="block px-4 py-2 text-xs font-bold text-gray-800 hover:text-[#A61919] hover:bg-[#FFF8F0]"
-                        >
-                          {cat}
-                        </Link>
-                      ))
-                    )}
+                        {(subcategoriesByParent[cat.id] || []).map((child) => (
+                          <Link
+                            key={child.id}
+                            href={`/category/${child.slug}`}
+                            className="block pl-8 pr-4 py-2 text-[11px] font-bold text-gray-600 hover:text-[#A61919] hover:bg-[#FFF8F0]"
+                          >
+                            {child.name.toUpperCase()}
+                          </Link>
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -185,38 +195,153 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Search Drawer */}
-        <AnimatePresence>
-          {showSearch && (
+      </nav>
+
+      {/* ── Modern Spotlight Search Modal ── */}
+      <AnimatePresence>
+        {showSearch && (
+          <>
+            {/* Blurred backdrop */}
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="pb-4 border-t border-[#EFE7DD] overflow-hidden"
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowSearch(false)}
+            />
+
+            {/* 
+              Mobile  → bottom sheet (slides up from bottom, full width)
+              md+     → centered floating panel (drops from top)
+            */}
+
+            {/* ── MOBILE top panel (compact) ── */}
+            <motion.div
+              key="mobile-panel"
+              initial={{ opacity: 0, y: -16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.97 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="md:hidden fixed top-4 left-3 right-3 z-[70] bg-white rounded-2xl shadow-2xl border border-[#EFE7DD] overflow-hidden"
             >
-              <form onSubmit={handleSearch} className="flex gap-2 pt-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              {/* Input row */}
+              <form onSubmit={handleSearch}>
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-[#F0EAE0]">
+                  <Search className="w-4 h-4 text-[#A61919] flex-shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search dry fruits, cashews, almonds, makhana, spices..."
-                    className="w-full pl-11 pr-4 py-2.5 rounded-full border border-gray-200 text-xs font-semibold bg-white"
+                    onKeyDown={(e) => e.key === 'Escape' && setShowSearch(false)}
+                    placeholder="Search cashews, almonds, spices…"
+                    className="flex-1 text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none bg-transparent min-w-0"
                     autoFocus
                   />
+                  {searchQuery && (
+                    <button type="button" onClick={() => setSearchQuery('')}
+                      className="text-gray-400 text-base leading-none flex-shrink-0">×</button>
+                  )}
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 bg-[#A61919] text-white text-[11px] font-extrabold rounded-lg hover:bg-[#8B0000] transition-colors tracking-wider flex-shrink-0"
+                  >
+                    GO
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-[#A61919] text-white text-xs font-extrabold rounded-full hover:bg-[#8B0000] transition-colors"
-                >
-                  SEARCH
-                </button>
               </form>
+
+              {/* Trending tags — compact */}
+              <div className="px-4 py-3">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-2">🔥 Trending</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {['Cashews', 'Almonds', 'Makhana', 'Pistachio', 'Gift Box', 'Walnuts'].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        router.push(`/search?q=${encodeURIComponent(tag)}`)
+                        setShowSearch(false)
+                      }}
+                      className="px-2.5 py-1 rounded-full bg-[#FFF8F0] border border-[#EFE7DD] text-[11px] font-semibold text-gray-700 active:bg-[#A61919] active:text-white transition-all"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
+
+            {/* ── TABLET / DESKTOP floating panel ── */}
+            <motion.div
+              key="desktop-panel"
+              initial={{ opacity: 0, y: -20, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.97 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="hidden md:block fixed top-6 left-1/2 -translate-x-1/2 z-[70] w-full max-w-2xl px-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-[#EFE7DD]">
+
+                {/* Input row */}
+                <form onSubmit={handleSearch}>
+                  <div className="flex items-center gap-3 px-5 py-4 border-b border-[#F0EAE0]">
+                    <div className="w-10 h-10 rounded-xl bg-[#A61919]/10 flex items-center justify-center flex-shrink-0">
+                      <Search className="w-5 h-5 text-[#A61919]" />
+                    </div>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Escape' && setShowSearch(false)}
+                      placeholder="Search cashews, almonds, makhana, spices…"
+                      className="flex-1 text-base font-medium text-gray-800 placeholder:text-gray-400 outline-none bg-transparent min-w-0"
+                      autoFocus
+                    />
+                    {searchQuery && (
+                      <button type="button" onClick={() => setSearchQuery('')}
+                        className="text-gray-400 hover:text-gray-600 transition-colors text-lg leading-none flex-shrink-0">×</button>
+                    )}
+                    <button
+                      type="submit"
+                      className="px-5 py-2 bg-[#A61919] text-white text-xs font-extrabold rounded-xl hover:bg-[#8B0000] transition-colors tracking-wider flex-shrink-0"
+                    >
+                      SEARCH
+                    </button>
+                  </div>
+                </form>
+
+                {/* Trending tags */}
+                <div className="px-5 py-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">🔥 Trending</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['Cashews', 'Premium Almonds', 'Makhana', 'Pistachio', 'Dry Fruit Gift Box', 'Walnuts', 'Mixed Spices'].map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => {
+                          router.push(`/search?q=${encodeURIComponent(tag)}`)
+                          setShowSearch(false)
+                        }}
+                        className="px-3.5 py-1.5 rounded-full bg-[#FFF8F0] border border-[#EFE7DD] text-xs font-semibold text-gray-700 hover:bg-[#A61919] hover:text-white hover:border-[#A61919] transition-all duration-150"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Footer hint */}
+                <div className="px-5 py-2.5 bg-[#FAFAF9] border-t border-[#F0EAE0] flex items-center justify-between">
+                  <span className="text-[10px] text-gray-400">Press <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] font-mono border border-gray-200">Esc</kbd> to close</span>
+                  <span className="text-[10px] text-gray-400">↵ Enter to search</span>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   )
 }
