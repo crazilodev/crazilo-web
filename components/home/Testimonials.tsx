@@ -115,23 +115,24 @@ export default function Testimonials({ testimonials }: TestimonialsProps) {
             {testimonials.map((_, i) => (
               <button
                 key={i}
-                style={{
-                  width: 'var(--card-w)',
-                  flexShrink: 0,
-                  marginRight: 'var(--card-gap)',
-                }}
-                className="rounded-3xl p-5 sm:p-6 border bg-white/10 border-white/10 hover:bg-white/[0.18] hover:border-brand-gold/40 transition-all duration-300 cursor-default"
-              >
-                <TestimonialCard review={review} />
-              </div>
+                onClick={() => setCurrent(i)}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  i === current
+                    ? 'bg-brand-red scale-125'
+                    : 'bg-white/30 hover:bg-white/50'
+                }`}
+                aria-label={`Go to review ${i + 1}`}
+              />
             ))}
           </div>
+          <button
+            onClick={next}
+            className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-brand-red hover:text-brand-red transition-all"
+            aria-label="Next"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
-
-        {/* Hint */}
-        <p className="text-center text-xs text-white/30 mt-6 tracking-wide select-none">
-          {isPaused ? '⏸ Paused — move mouse away to resume' : 'Hover a card to pause'}
-        </p>
       </div>
     </section>
   )
