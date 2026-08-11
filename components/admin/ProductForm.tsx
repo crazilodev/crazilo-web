@@ -272,7 +272,21 @@ export default function ProductForm({ product }: ProductFormProps) {
         <h2 className="font-heading font-bold text-xl text-gray-900 mb-5">Inventory</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input label="SKU" {...register('sku')} id="product-sku" />
-          <Input label="Stock Quantity" type="number" {...register('stock_quantity')} error={errors.stock_quantity?.message} id="product-stock" />
+          <div className="relative">
+            <Input
+              label="Stock Quantity"
+              type="number"
+              disabled={isEdit}
+              {...register('stock_quantity')}
+              error={errors.stock_quantity?.message}
+              id="product-stock"
+            />
+            {isEdit && (
+              <p className="text-[10px] text-amber-600 mt-1 font-semibold">
+                * Stock adjustments must be made through the Inventory tab.
+              </p>
+            )}
+          </div>
           <Input label="Low Stock Alert" type="number" {...register('low_stock_threshold')} id="product-low-stock" />
           <Input label="Weight (grams)" type="number" {...register('weight_grams')} id="product-weight" />
           <div>
@@ -394,8 +408,10 @@ export default function ProductForm({ product }: ProductFormProps) {
                       <input
                         type="number"
                         value={v.stock_quantity}
+                        disabled={!!v.id}
                         onChange={(e) => handleUpdateVariantField(index, 'stock_quantity', Number(e.target.value))}
-                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand"
+                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        title={v.id ? "Stock quantity of existing variants can only be updated in the Inventory tab." : ""}
                       />
                     </td>
                     <td className="px-3 py-2">

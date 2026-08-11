@@ -183,6 +183,9 @@ export async function updateProductAction(
     }
 
     // 3. Update Product
+    // Delete stock_quantity from payload to prevent manual overwrites of existing stock
+    delete (productPayload as any).stock_quantity
+
     const { error: productUpdateError } = await supabase
       .from('products')
       .update(productPayload)
@@ -233,16 +236,20 @@ export async function updateProductAction(
 
     // Save and Update variants
     for (const v of variants) {
-      const vPayload = {
+      const vPayload: any = {
         product_id: productId,
         name: v.name,
         sku: v.sku || null,
         price: Number(v.price),
         compare_price: v.compare_price ? Number(v.compare_price) : null,
-        stock_quantity: Math.floor(Number(v.stock_quantity)),
         weight_grams: v.weight_grams ? Math.floor(Number(v.weight_grams)) : null,
         display_order: Math.floor(Number(v.display_order)) || 0,
         is_active: v.is_active,
+      }
+
+      if (!v.id) {
+        // Stock quantity is only set during initial variant creation
+        vPayload.stock_quantity = Math.floor(Number(v.stock_quantity))
       }
 
       if (v.id) {

@@ -17,9 +17,18 @@ interface LoginForm {
 }
 
 export default function LoginClient() {
+  function isInternalUrl(url: string | null): boolean {
+    if (!url) return false
+    if (url.includes('://') || url.startsWith('//') || url.startsWith('\\\\') || url.toLowerCase().startsWith('javascript:')) {
+      return false
+    }
+    return url.startsWith('/')
+  }
+
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/'
+  const rawRedirect = searchParams.get('redirect')
+  const cleanRedirect = isInternalUrl(rawRedirect) ? rawRedirect! : '/'
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const {
@@ -32,10 +41,31 @@ export default function LoginClient() {
     setLoading(true)
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
+      const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      if (authError) throw authError
+      if (!user) throw new Error('Failed to retrieve authentication details')
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError || !profile) {
+        throw new Error('Failed to load user account profile details')
+      }
+
       toast.success('Welcome back! 👋')
-      router.push(redirect)
+
+      if (profile.role === 'admin') {
+        if (cleanRedirect.startsWith('/admin')) {
+          router.push(cleanRedirect)
+        } else {
+          router.push('/admin')
+        }
+      } else {
+        router.push(cleanRedirect)
+      }
       router.refresh()
     } catch (err: any) {
       toast.error(err.message || 'Invalid credentials')
