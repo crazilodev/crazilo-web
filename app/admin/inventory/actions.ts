@@ -1,6 +1,7 @@
 'use server'
 
 import { requireAdmin } from '@/app/admin/actions'
+import { getInventoryOverview as fetchOverview, getInventoryMovements as fetchMovements } from '@/lib/data/inventory'
 
 export async function adjustInventoryAction(payload: {
   productId: string
@@ -29,5 +30,25 @@ export async function adjustInventoryAction(payload: {
     return { success: true, data }
   } catch (err: any) {
     return { success: false, error: err.message || 'Operation failed' }
+  }
+}
+
+export async function getInventoryOverviewAction() {
+  try {
+    await requireAdmin()
+    const data = await fetchOverview()
+    return { success: true, data }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to fetch inventory overview' }
+  }
+}
+
+export async function getInventoryMovementsAction(limit = 100) {
+  try {
+    await requireAdmin()
+    const data = await fetchMovements(limit)
+    return { success: true, data }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to fetch inventory movements' }
   }
 }
