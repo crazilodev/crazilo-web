@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Category, Product, SortOption } from '@/types'
 import ProductGrid from '@/components/products/ProductGrid'
 import { formatPrice } from '@/lib/utils/formatPrice'
+import { getActiveProducts } from '@/lib/data/catalog'
+import { getMainCategories, getSubcategories } from '@/lib/data/categories'
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest First' },
@@ -30,12 +32,11 @@ export default function ProductsPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       const supabase = createClient()
-      const { data } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order')
-      if (data) setCategories(data)
+      const mainCategories = await getMainCategories(supabase)
+      const nestedSubcategories = await Promise.all(
+        mainCategories.map((category) => getSubcategories(supabase, category.id))
+      )
+      setCategories([...mainCategories, ...nestedSubcategories.flat()])
     }
     fetchCategories()
   }, [])
@@ -44,36 +45,34 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
       setLoading(true)
       const supabase = createClient()
-      let query = supabase
-        .from('products')
-        .select('*, category:categories(*)', { count: 'exact' })
-        .eq('is_active', true)
-        .gte('price', priceRange[0])
-        .lte('price', priceRange[1])
-
-      if (selectedCategory) query = query.eq('category_id', selectedCategory)
-
       const sortParam = searchParams.get('sort') as SortOption
       const activeSort = sortParam || sort
-      if (activeSort === 'price_asc') query = query.order('price', { ascending: true })
-      else if (activeSort === 'price_desc') query = query.order('price', { ascending: false })
-      else if (activeSort === 'popular') query = query.order('total_sold', { ascending: false })
-      else if (activeSort === 'rating') query = query.order('average_rating', { ascending: false })
-      else query = query.order('created_at', { ascending: false })
 
       const filterNew = searchParams.get('filter') === 'new'
-      if (filterNew) query = query.eq('is_new', true)
-
       const tag = searchParams.get('tag')
-      if (tag) query = query.contains('tags', [tag])
 
-      const { data, count } = await query
-      setProducts(data || [])
-      setTotal(count || 0)
+      const selected = selectedCategory ? categories.find((category) => category.id === selectedCategory) : null
+      const categoryIds = selected
+        ? selected.parent_id
+          ? [selected.id]
+          : [selected.id, ...categories.filter((child) => child.parent_id === selected.id).map((child) => child.id)]
+        : undefined
+
+      const data = await getActiveProducts(supabase, {
+        categoryIds,
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+        sort: activeSort,
+        tags: tag ? [tag] : undefined,
+      })
+
+      const productsData = filterNew ? data.filter((product) => product.is_new) : data
+      setProducts(productsData)
+      setTotal(productsData.length)
       setLoading(false)
     }
     fetchProducts()
-  }, [sort, selectedCategory, priceRange, searchParams])
+  }, [sort, selectedCategory, priceRange, searchParams, categories])
 
   return (
     <div className="min-h-screen bg-gray-50">

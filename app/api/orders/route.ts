@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createOrderWithItems, getUserOrderById, getUserOrders } from '@/lib/data/orders'
 
 export async function GET(request: Request) {
   try {
@@ -11,28 +12,15 @@ export async function GET(request: Request) {
     const orderId = searchParams.get('id')
 
     if (orderId) {
-      const { data: order, error } = await supabase
-        .from('orders')
-        .select('*, items:order_items(*)')
-        .eq('id', orderId)
-        .eq('user_id', user.id)
-        .single()
-
-      if (error || !order) {
+      const order = await getUserOrderById(supabase, user.id, orderId)
+      if (!order) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 })
       }
       return NextResponse.json({ order })
     }
 
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select('*, items:order_items(*)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
-    if (error) throw error
-
-    return NextResponse.json({ orders: orders || [] })
+    const orders = await getUserOrders(supabase, user.id)
+    return NextResponse.json({ orders })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to fetch orders' }, { status: 500 })
   }
@@ -56,21 +44,23 @@ export async function POST(request: Request) {
     }
 
     const orderItems = items.map((item: any) => ({
-      product_id: item.product_id || item.product?.id || null,
+      product_id: item.product_id || item.product?.id || '',
       variant_id: item.variant_id || item.variant?.id || null,
       quantity: Number(item.quantity) || 1,
     }))
 
-    const { data: order, error: orderError } = await supabase.rpc('create_order_with_items', {
-      p_shipping_address: shipping_address,
-      p_billing_address: billing_address || shipping_address,
-      p_coupon_code: coupon_code ? String(coupon_code).toUpperCase().trim() : null,
-      p_payment_method: payment_method || 'cod',
-      p_customer_notes: customer_notes || null,
-      p_items: orderItems,
-    })
+    if (orderItems.some((item) => !item.product_id || item.quantity <= 0)) {
+      return NextResponse.json({ error: 'Invalid order items' }, { status: 400 })
+    }
 
-    if (orderError) throw orderError
+    const order = await createOrderWithItems(supabase, {
+      shippingAddress: shipping_address,
+      billingAddress: billing_address || shipping_address,
+      couponCode: coupon_code || null,
+      paymentMethod: payment_method || 'cod',
+      customerNotes: customer_notes || null,
+      items: orderItems,
+    })
 
     return NextResponse.json({
       success: true,

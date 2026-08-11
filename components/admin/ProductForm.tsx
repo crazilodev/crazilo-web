@@ -65,7 +65,7 @@ export default function ProductForm({ product }: ProductFormProps) {
     const fetchCategories = async () => {
       const supabase = createClient()
       const { data } = await supabase.from('categories').select('*').eq('is_active', true).order('name')
-      if (data) setCategories(data.filter(c => c.slug !== 'all'))
+      if (data) setCategories(data.filter((c: { slug: string }) => c.slug !== 'all'))
     }
     fetchCategories()
   }, [])

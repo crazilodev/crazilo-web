@@ -35,7 +35,7 @@ export function useProducts(filters?: Partial<FilterState>) {
               .select('id')
               .eq('parent_id', cat.id)
 
-            const categoryIds = [cat.id, ...(children?.map((child) => child.id) || [])]
+            const categoryIds = [cat.id, ...(children?.map((child: { id: string }) => child.id) || [])]
             query = query.in('category_id', categoryIds)
           }
         }

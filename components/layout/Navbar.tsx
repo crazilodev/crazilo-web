@@ -14,6 +14,8 @@ import { useCartStore } from '@/lib/store/cartStore'
 import { useWishlistStore } from '@/lib/store/wishlistStore'
 import { Category, Profile } from '@/types'
 import type { User as SupaUser } from '@supabase/supabase-js'
+import { getMainCategories, getSubcategories } from '@/lib/data/categories'
+import { getProfileById } from '@/lib/data/profiles'
 
 export default function Navbar() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -32,14 +34,17 @@ export default function Navbar() {
   useEffect(() => {
     const supabase = createClient()
     const fetchData = async () => {
-      const [{ data: cats }, { data: { user: u } }] = await Promise.all([
-        supabase.from('categories').select('*').eq('is_active', true).order('sort_order').limit(50),
-        supabase.auth.getUser(),
-      ])
-      if (cats) setCategories(cats)
+      const { data: { user: u } } = await supabase.auth.getUser()
+
+      const mainCategories = await getMainCategories(supabase)
+      const nestedSubcategories = await Promise.all(
+        mainCategories.map((category) => getSubcategories(supabase, category.id))
+      )
+      setCategories([...mainCategories, ...nestedSubcategories.flat()])
+
       if (u) {
         setUser(u)
-        const { data: prof } = await supabase.from('profiles').select('*').eq('id', u.id).single()
+        const prof = await getProfileById(supabase, u.id)
         if (prof) setProfile(prof)
       }
     }
@@ -117,37 +122,25 @@ export default function Navbar() {
                 {/* Dropdown Menu for Categories */}
                 {item.hasDropdown && (
                     <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 py-2 z-50">
-                    {mainCategories.length > 0 ? (
-                      mainCategories.map((cat) => (
-                        <div key={cat.id}>
-                          <Link
-                            href={`/category/${cat.slug}`}
-                            className="block px-4 py-2 text-xs font-extrabold text-gray-800 hover:text-[#A61919] hover:bg-[#FFF8F0]"
-                          >
-                            {cat.name.toUpperCase()}
-                          </Link>
-                          {(subcategoriesByParent[cat.id] || []).map((child) => (
-                            <Link
-                              key={child.id}
-                              href={`/category/${child.slug}`}
-                              className="block pl-8 pr-4 py-2 text-[11px] font-bold text-gray-600 hover:text-[#A61919] hover:bg-[#FFF8F0]"
-                            >
-                              {child.name.toUpperCase()}
-                            </Link>
-                          ))}
-                        </div>
-                      ))
-                    ) : (
-                      ['CASHEWS', 'ALMONDS', 'PISTACHIOS', 'WALNUTS', 'RAISINS', 'DATES', 'DRIED BERRIES'].map((cat) => (
+                    {mainCategories.map((cat) => (
+                      <div key={cat.id}>
                         <Link
-                          key={cat}
-                          href={`/category/dry-fruits`}
-                          className="block px-4 py-2 text-xs font-bold text-gray-800 hover:text-[#A61919] hover:bg-[#FFF8F0]"
+                          href={`/category/${cat.slug}`}
+                          className="block px-4 py-2 text-xs font-extrabold text-gray-800 hover:text-[#A61919] hover:bg-[#FFF8F0]"
                         >
-                          {cat}
+                          {cat.name.toUpperCase()}
                         </Link>
-                      ))
-                    )}
+                        {(subcategoriesByParent[cat.id] || []).map((child) => (
+                          <Link
+                            key={child.id}
+                            href={`/category/${child.slug}`}
+                            className="block pl-8 pr-4 py-2 text-[11px] font-bold text-gray-600 hover:text-[#A61919] hover:bg-[#FFF8F0]"
+                          >
+                            {child.name.toUpperCase()}
+                          </Link>
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/utils/formatPrice'
 import { Package, ChevronRight, Truck, CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { getUserOrders } from '@/lib/data/orders'
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', color: 'text-yellow-600 bg-yellow-50', icon: Clock },
@@ -30,12 +31,8 @@ export default function OrdersPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data } = await supabase
-        .from('orders')
-        .select('*, items:order_items(*)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-      setOrders(data || [])
+      const data = await getUserOrders(supabase, user.id)
+      setOrders(data)
       setLoading(false)
     }
     fetchOrders()
