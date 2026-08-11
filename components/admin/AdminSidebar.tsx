@@ -113,10 +113,12 @@ export default function AdminSidebar() {
   }
 
   const toggleGroup = (label: string) => {
-    setOpenGroups((prev) => ({
-      ...prev,
-      [label]: !prev[label],
-    }))
+    setOpenGroups((prev) => {
+      const nextState: Record<string, boolean> = {}
+      // Keep target group toggled, collapse all others
+      nextState[label] = !prev[label]
+      return nextState;
+    })
   }
 
   const SidebarContent = () => (
