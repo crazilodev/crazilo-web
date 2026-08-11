@@ -25,7 +25,41 @@ export default function Testimonials({ testimonials }: TestimonialsProps) {
 
   return (
     <section className="py-20 bg-brand-dark overflow-hidden">
+      <style>{`
+        :root {
+          --card-w: 280px;
+          --card-gap: 16px;
+          --copy-w: calc(5 * (var(--card-w) + var(--card-gap)));
+        }
+        @media (min-width: 640px) {
+          :root {
+            --card-w: 310px;
+            --card-gap: 18px;
+          }
+        }
+        @media (min-width: 1024px) {
+          :root {
+            --card-w: 360px;
+            --card-gap: 20px;
+          }
+        }
+        @keyframes marquee-seamless {
+          0%   { transform: translateX(0px); }
+          100% { transform: translateX(calc(-1 * var(--copy-w))); }
+        }
+        .marquee-inner {
+          display: flex;
+          width: max-content;
+          animation: marquee-seamless 20s linear infinite;
+          will-change: transform;
+        }
+        .marquee-inner.paused {
+          animation-play-state: paused;
+        }
+      `}</style>
+
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -81,22 +115,23 @@ export default function Testimonials({ testimonials }: TestimonialsProps) {
             {testimonials.map((_, i) => (
               <button
                 key={i}
-                onClick={() => setCurrent(i)}
-                className={`transition-all rounded-full ${
-                  i === current ? 'w-6 h-2.5 bg-brand-gold' : 'w-2.5 h-2.5 bg-white/30'
-                }`}
-                aria-label={`Go to ${i + 1}`}
-              />
+                style={{
+                  width: 'var(--card-w)',
+                  flexShrink: 0,
+                  marginRight: 'var(--card-gap)',
+                }}
+                className="rounded-3xl p-5 sm:p-6 border bg-white/10 border-white/10 hover:bg-white/[0.18] hover:border-brand-gold/40 transition-all duration-300 cursor-default"
+              >
+                <TestimonialCard review={review} />
+              </div>
             ))}
           </div>
-          <button
-            onClick={next}
-            className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white hover:border-brand-red hover:text-brand-red transition-all"
-            aria-label="Next"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
         </div>
+
+        {/* Hint */}
+        <p className="text-center text-xs text-white/30 mt-6 tracking-wide select-none">
+          {isPaused ? '⏸ Paused — move mouse away to resume' : 'Hover a card to pause'}
+        </p>
       </div>
     </section>
   )
@@ -105,8 +140,8 @@ export default function Testimonials({ testimonials }: TestimonialsProps) {
 function TestimonialCard({ review, dark = false }: { review: Testimonial; dark?: boolean }) {
   return (
     <div className="flex flex-col h-full">
-      <Quote className={`w-8 h-8 mb-4 ${dark ? 'text-brand-gold/40' : 'text-brand-gold'}`} />
-      <p className={`text-sm leading-relaxed mb-6 flex-1 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
+      <Quote className="w-6 h-6 sm:w-8 sm:h-8 mb-3 sm:mb-4 text-brand-gold/60" />
+      <p className="text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 flex-1 text-gray-300">
         &ldquo;{review.text}&rdquo;
       </p>
       <div>
@@ -118,10 +153,10 @@ function TestimonialCard({ review, dark = false }: { review: Testimonial; dark?:
             {review.avatar_initial}
           </div>
           <div>
-            <p className={`font-semibold text-sm ${dark ? 'text-white' : 'text-gray-900'}`}>{review.name}</p>
-            <p className={`text-xs ${dark ? 'text-gray-500' : 'text-gray-400'}`}>{review.location}</p>
+            <p className="font-semibold text-xs sm:text-sm text-white">{review.name}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">{review.location}</p>
           </div>
-          <div className="ml-auto flex">
+          <div className="ml-auto flex gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
