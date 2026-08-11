@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
     
     let { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, is_active')
       .eq('id', user.id)
       .single()
 
@@ -80,13 +80,32 @@ export async function middleware(request: NextRequest) {
         // Re-fetch profile
         const { data: updatedProfile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, is_active')
           .eq('id', user.id)
           .single()
         profile = updatedProfile
       } catch (err) {
         console.error('Error promoting admin in middleware:', err)
       }
+    }
+
+    if (profile && !profile.is_active) {
+      await supabase.auth.signOut()
+      const loginUrl = new URL('/auth/login', request.url)
+      loginUrl.searchParams.set('error', 'suspended')
+      const redirectResponse = NextResponse.redirect(loginUrl)
+      supabaseResponse.cookies.getAll().forEach(c => {
+        redirectResponse.cookies.set(c.name, c.value, {
+          path: c.path,
+          domain: c.domain,
+          secure: c.secure,
+          httpOnly: c.httpOnly,
+          sameSite: c.sameSite,
+          expires: c.expires,
+          maxAge: c.maxAge,
+        } as any)
+      })
+      return redirectResponse
     }
 
     if (!profile || profile.role !== 'admin') {
@@ -103,6 +122,31 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL('/auth/login', request.url)
       loginUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(loginUrl)
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, is_active')
+      .eq('id', user.id)
+      .single()
+
+    if (profile && !profile.is_active) {
+      await supabase.auth.signOut()
+      const loginUrl = new URL('/auth/login', request.url)
+      loginUrl.searchParams.set('error', 'suspended')
+      const redirectResponse = NextResponse.redirect(loginUrl)
+      supabaseResponse.cookies.getAll().forEach(c => {
+        redirectResponse.cookies.set(c.name, c.value, {
+          path: c.path,
+          domain: c.domain,
+          secure: c.secure,
+          httpOnly: c.httpOnly,
+          sameSite: c.sameSite,
+          expires: c.expires,
+          maxAge: c.maxAge,
+        } as any)
+      })
+      return redirectResponse
     }
   }
 

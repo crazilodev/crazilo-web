@@ -32,6 +32,17 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    // Active-account enforcement: suspended users cannot create orders
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_active')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || !profile.is_active) {
+      return NextResponse.json({ error: 'Your account has been suspended. Order placement is not permitted.' }, { status: 403 })
+    }
+
     const body = await request.json()
     const { shipping_address, billing_address, items, coupon_code, customer_notes, payment_method } = body
 
