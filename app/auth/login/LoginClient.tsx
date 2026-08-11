@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { syncAdminRole } from '@/app/admin/actions'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import toast from 'react-hot-toast'
@@ -45,6 +46,9 @@ export default function LoginClient() {
       if (authError) throw authError
       if (!user) throw new Error('Failed to retrieve authentication details')
 
+      // Sync/promote admin role if email matches admin email
+      await syncAdminRole()
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
@@ -58,18 +62,13 @@ export default function LoginClient() {
       toast.success('Welcome back! 👋')
 
       if (profile.role === 'admin') {
-        if (cleanRedirect.startsWith('/admin')) {
-          router.push(cleanRedirect)
-        } else {
-          router.push('/admin')
-        }
+        const dest = cleanRedirect.startsWith('/admin') ? cleanRedirect : '/admin'
+        window.location.href = dest
       } else {
-        router.push(cleanRedirect)
+        window.location.href = cleanRedirect
       }
-      router.refresh()
     } catch (err: any) {
       toast.error(err.message || 'Invalid credentials')
-    } finally {
       setLoading(false)
     }
   }

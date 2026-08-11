@@ -1,7 +1,37 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+
+export async function syncAdminRole() {
+  const supabase = createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@crazilo.com'
+  if (user.email === adminEmail) {
+    const { error: upsertError } = await supabaseAdmin
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || 'Admin',
+        role: 'admin',
+        is_active: true,
+        updated_at: new Date().toISOString()
+      })
+
+    if (upsertError) {
+      console.error('Failed to upsert admin profile:', upsertError)
+      return { success: false, error: upsertError.message }
+    }
+    return { success: true, promoted: true }
+  }
+  return { success: true, promoted: false }
+}
 
 export async function requireAdmin() {
   const supabase = createClient()
