@@ -10,6 +10,7 @@ import { updateOrderStatus } from '@/app/admin/actions'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import ConfirmDialog from '@/components/admin/ConfirmDialog'
 import StatusBadge from '@/components/admin/StatusBadge'
+import { canTransitionOrderStatus } from '@/lib/validations/orderStatus'
 
 const STATUSES = ['all', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded']
 
@@ -208,15 +209,20 @@ export default function AdminOrdersPage() {
                             STATUS_COLORS[order.status]
                           } focus:outline-none focus:ring-1 focus:ring-brand-red/35`}
                         >
-                          {STATUSES.filter((s) => s !== 'all').map((s) => (
-                            <option
-                              key={s}
-                              value={s}
-                              className="bg-white text-gray-900 capitalize font-sans"
-                            >
-                              {s}
-                            </option>
-                          ))}
+                          {STATUSES.filter((s) => s !== 'all').map((s) => {
+                            const isCurrent = order.status === s
+                            const isAllowed = canTransitionOrderStatus(order.status as any, s as any)
+                            return (
+                              <option
+                                key={s}
+                                value={s}
+                                disabled={!isCurrent && !isAllowed}
+                                className="bg-white text-gray-900 capitalize font-sans disabled:text-gray-300"
+                              >
+                                {s}
+                              </option>
+                            )
+                          })}
                         </select>
                       </div>
                     </td>
