@@ -4,47 +4,13 @@ import { useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import type { Category } from '@/types'
 
-const CATEGORY_ITEMS = [
-  {
-    name: 'DRY FRUITS',
-    slug: 'dry-fruits',
-    image: '/images/cat-dryfruits.png',
-    link: '/category/dry-fruits',
-  },
-  {
-    name: 'NUTS & SEEDS',
-    slug: 'nuts',
-    image: '/images/cat-nuts.png',
-    link: '/category/nuts',
-  },
-  {
-    name: 'SPICES',
-    slug: 'spices',
-    image: '/images/cat-spices.png',
-    link: '/category/spices',
-  },
-  {
-    name: 'COMBOS',
-    slug: 'combos',
-    image: '/images/cat-combos.png',
-    link: '/category/combos',
-  },
-  {
-    name: 'GIFTS',
-    slug: 'gift-boxes',
-    image: '/images/cat-gifts.png',
-    link: '/category/gift-boxes',
-  },
-  {
-    name: 'MAKHANA',
-    slug: 'makhana',
-    image: '/images/cat-makhana.png',
-    link: '/category/makhana',
-  },
-]
+interface CategoryScrollProps {
+  categories: Category[]
+}
 
-export default function CategoryScroll() {
+export default function CategoryScroll({ categories }: CategoryScrollProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const scroll = (direction: 'left' | 'right') => {
@@ -54,11 +20,11 @@ export default function CategoryScroll() {
     }
   }
 
+  if (categories.length === 0) return null
+
   return (
     <section className="py-10 bg-[#FFFDF9] border-b border-[#EFE7DD]">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header with Arrow Navigation */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <span className="text-[11px] font-black text-[#A65E2E] uppercase tracking-widest block mb-1">
@@ -69,7 +35,6 @@ export default function CategoryScroll() {
             </h2>
           </div>
 
-          {/* Slider Arrow Controls */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => scroll('left')}
@@ -88,35 +53,30 @@ export default function CategoryScroll() {
           </div>
         </div>
 
-        {/* Category Horizontal Slider Cards */}
         <div
           ref={scrollRef}
           className="flex items-center gap-4 overflow-x-auto scrollbar-none pb-2 scroll-smooth"
         >
-          {CATEGORY_ITEMS.map((item) => (
+          {categories.map((item) => (
             <Link
-              key={item.name}
-              href={item.link}
+              key={item.id}
+              href={`/category/${item.slug}`}
               className="flex-shrink-0 flex items-center gap-3 bg-[#FAF4ED] hover:bg-[#FFF0E2] border border-[#EFE5D8] hover:border-[#A61919] px-5 py-3.5 rounded-2xl transition-all duration-300 group shadow-sm min-w-[200px]"
             >
-              {/* Product Bowl Cutout Image */}
               <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white/80 p-1 flex-shrink-0 group-hover:scale-110 transition-transform">
-                <Image
-                  src={item.image}
-                  alt={item.name}
-                  fill
-                  className="object-contain"
-                />
+                {item.image_url ? (
+                  <Image src={item.image_url} alt={item.name} fill className="object-contain" />
+                ) : (
+                  <div className="w-full h-full bg-white/80" />
+                )}
               </div>
 
-              {/* Category Name */}
               <span className="font-heading text-xs font-black text-[#1A1A1A] group-hover:text-[#A61919] tracking-wider uppercase">
                 {item.name}
               </span>
             </Link>
           ))}
         </div>
-
       </div>
     </section>
   )

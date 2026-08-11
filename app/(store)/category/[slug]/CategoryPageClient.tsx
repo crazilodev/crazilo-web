@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import ProductGrid from '@/components/products/ProductGrid'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
+import { getCategoryProducts } from '@/lib/data/categories'
 
 interface Props { category: Category }
 
@@ -16,17 +17,12 @@ export default function CategoryPageClient({ category }: Props) {
   useEffect(() => {
     const fetch = async () => {
       const supabase = createClient()
-      const { data } = await supabase
-        .from('products')
-        .select('*, category:categories(*)')
-        .eq('is_active', true)
-        .eq('category_id', category.id)
-        .order('created_at', { ascending: false })
-      setProducts(data || [])
+      const data = await getCategoryProducts(supabase, category)
+      setProducts(data)
       setLoading(false)
     }
     fetch()
-  }, [category.id])
+  }, [category])
 
   return (
     <div className="min-h-screen bg-gray-50">

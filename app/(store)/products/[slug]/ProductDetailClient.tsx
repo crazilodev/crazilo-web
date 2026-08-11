@@ -324,11 +324,14 @@ export default function ProductDetailClient({ product, relatedProducts, reviews 
 
             {activeTab === 'nutrition' && (
               <div>
-                {Object.keys(product.nutritional_info || {}).length > 0 ? (
+                {product.nutritional_info &&
+                typeof product.nutritional_info === 'object' &&
+                !Array.isArray(product.nutritional_info) &&
+                Object.keys(product.nutritional_info).length > 0 ? (
                   <div className="max-w-md">
                     <h3 className="font-heading font-bold text-lg text-gray-900 mb-4">Nutritional Information</h3>
                     <div className="border border-gray-200 rounded-2xl overflow-hidden">
-                      {Object.entries(product.nutritional_info).map(([key, value], i) => (
+                      {Object.entries(product.nutritional_info as Record<string, unknown>).map(([key, value], i) => (
                         <div key={key} className={`flex justify-between px-4 py-3 text-sm ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
                           <span className="text-gray-600 capitalize">{key.replace(/_/g, ' ')}</span>
                           <span className="font-semibold text-gray-900">{String(value)}</span>

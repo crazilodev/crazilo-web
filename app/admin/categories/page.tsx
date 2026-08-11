@@ -15,7 +15,8 @@ interface CategoryForm {
   name: string
   slug: string
   description: string
-  display_order: number
+  parent_id: string | null
+  sort_order: number
 }
 
 export default function AdminCategoriesPage() {
@@ -34,7 +35,7 @@ export default function AdminCategoriesPage() {
 
   const fetchCategories = async () => {
     const supabase = createClient()
-    const { data } = await supabase.from('categories').select('*').order('display_order')
+    const { data } = await supabase.from('categories').select('*').order('sort_order')
     setCategories(data || [])
     setLoading(false)
   }
@@ -44,7 +45,13 @@ export default function AdminCategoriesPage() {
   const openEdit = (cat: Category) => {
     setEditing(cat)
     setImages(cat.image_url ? [cat.image_url] : [])
-    reset({ name: cat.name, slug: cat.slug, description: cat.description || '', display_order: cat.display_order })
+    reset({
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description || '',
+      parent_id: cat.parent_id,
+      sort_order: cat.sort_order,
+    })
     setShowForm(true)
   }
 
@@ -52,7 +59,11 @@ export default function AdminCategoriesPage() {
     setSubmitting(true)
     try {
       const supabase = createClient()
-      const payload = { ...data, image_url: images[0] || null }
+      const payload = {
+        ...data,
+        parent_id: data.parent_id || null,
+        image_url: images[0] || null,
+      }
 
       if (editing) {
         await supabase.from('categories').update(payload).eq('id', editing.id)
@@ -85,6 +96,8 @@ export default function AdminCategoriesPage() {
     fetchCategories()
   }
 
+  const availableParents = categories.filter((cat) => !cat.parent_id && cat.id !== editing?.id)
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8">
@@ -102,7 +115,16 @@ export default function AdminCategoriesPage() {
               <Input label="Name *" {...register('name', { required: true })} id="cat-name" />
               <Input label="Slug *" {...register('slug', { required: true })} id="cat-slug" />
               <Input label="Description" {...register('description')} id="cat-desc" />
-              <Input label="Display Order" type="number" {...register('display_order')} id="cat-order" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Parent Category</label>
+                <select {...register('parent_id')} className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm input-brand" id="cat-parent">
+                  <option value="">Main Category</option>
+                  {availableParents.map((parent) => (
+                    <option key={parent.id} value={parent.id}>{parent.name}</option>
+                  ))}
+                </select>
+              </div>
+              <Input label="Sort Order" type="number" {...register('sort_order')} id="cat-order" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Category Image</p>
@@ -136,7 +158,7 @@ export default function AdminCategoriesPage() {
               <tr key={cat.id} className="border-t border-gray-50 hover:bg-gray-50">
                 <td className="px-5 py-3 font-semibold text-sm">{cat.name}</td>
                 <td className="px-5 py-3 text-sm text-gray-500 font-mono">{cat.slug}</td>
-                <td className="px-5 py-3 text-sm text-gray-500">{cat.display_order}</td>
+                <td className="px-5 py-3 text-sm text-gray-500">{cat.sort_order}</td>
                 <td className="px-5 py-3">
                   <button onClick={() => toggleActive(cat)} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${cat.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
                     {cat.is_active ? 'Active' : 'Hidden'}
