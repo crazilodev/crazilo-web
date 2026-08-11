@@ -51,12 +51,17 @@ export default function LoginClient() {
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, is_active')
         .eq('id', user.id)
         .single()
 
       if (profileError || !profile) {
         throw new Error('Failed to load user account profile details')
+      }
+
+      if (!profile.is_active) {
+        await supabase.auth.signOut()
+        throw new Error('Your account has been suspended by an administrator.')
       }
 
       toast.success('Welcome back! 👋')
@@ -89,6 +94,11 @@ export default function LoginClient() {
           </div>
 
           <div className="p-8">
+            {searchParams.get('error') === 'suspended' && (
+              <div className="mb-5 bg-red-50 border border-red-150 rounded-2xl p-4 text-xs text-red-700 font-semibold leading-relaxed">
+                Your account has been suspended by an administrator. Login credentials are locked.
+              </div>
+            )}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <Input
                 label="Email Address"

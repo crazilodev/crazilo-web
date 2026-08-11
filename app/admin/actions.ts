@@ -49,12 +49,16 @@ export async function requireAdmin() {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, is_active')
     .eq('id', user.id)
     .single()
 
   if (profileError || !profile || profile.role !== 'admin') {
     throw new Error('Forbidden: Admin access required')
+  }
+
+  if (!profile.is_active) {
+    throw new Error('Forbidden: Account suspended')
   }
 
   return { supabase, user }
