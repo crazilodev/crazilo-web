@@ -141,3 +141,39 @@ export async function getAdminHomeHighlightsList(
   if (error) throw error
   return (data || []) as HomeHighlight[]
 }
+
+export async function getAdminHomeFeatureCardsList(
+  supabase: any,
+  options?: {
+    search?: string
+    status?: 'all' | 'active' | 'inactive'
+    sectionKey?: 'all' | 'find_your_snack' | 'featured_collections'
+  }
+): Promise<HomeFeatureCard[]> {
+  let query = supabase
+    .from('home_feature_cards')
+    .select('*, categories(id, name, slug)')
+
+  if (options?.status === 'active') {
+    query = query.eq('is_active', true)
+  } else if (options?.status === 'inactive') {
+    query = query.eq('is_active', false)
+  }
+
+  if (options?.sectionKey && options.sectionKey !== 'all') {
+    query = query.eq('section_key', options.sectionKey)
+  }
+
+  if (options?.search) {
+    const searchVal = `%${options.search}%`
+    query = query.or(
+      `title.ilike.${searchVal},subtitle.ilike.${searchVal},eyebrow_text.ilike.${searchVal},description.ilike.${searchVal}`
+    )
+  }
+
+  const { data, error } = await query
+    .order('section_key', { ascending: true })
+    .order('display_order', { ascending: true })
+  if (error) throw error
+  return (data || []) as HomeFeatureCard[]
+}
