@@ -83,36 +83,27 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
               x: { type: 'spring', stiffness: 220, damping: 26 },
               opacity: { duration: 0.35 },
             }}
-            className="absolute inset-0 pt-6 pb-12 w-full h-full flex items-center"
-            style={{ backgroundColor: activeBanner.bg_color || '#FFF5EA' }}
+            className="absolute inset-0 pt-6 pb-12 w-full h-full flex items-center bg-no-repeat bg-center"
+            style={{ 
+              backgroundColor: activeBanner.bg_color || '#FFF5EA',
+              backgroundImage: activeBanner.is_full_width ? `url(${activeBanner.image_url})` : 'none',
+              backgroundSize: 'cover'
+            }}
           >
             <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[460px]">
-                <div
-                  className="lg:col-span-6 space-y-6 z-10 py-6"
-                  style={{ color: activeBanner.text_color || '#1A1A1A' }}
-                >
+              {activeBanner.is_full_width ? (
+                /* Full width layout - Hide texts, center/left align badge & CTA buttons */
+                <div className="flex flex-col justify-center min-h-[460px] space-y-6 max-w-lg">
                   {activeBanner.badge_text && (
-                    <span className="inline-block text-xs font-black tracking-widest uppercase text-brand-gold bg-brand-gold/10 px-3 py-1 rounded-full">
+                    <span 
+                      className="inline-block text-xs font-black tracking-widest uppercase bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full w-max"
+                      style={{ color: activeBanner.text_color || '#FFFFFF' }}
+                    >
                       {activeBanner.badge_text}
                     </span>
                   )}
-
-                  <h1 
-                    className="font-heading text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.05] tracking-tight"
-                    style={{ color: activeBanner.text_color || '#1A1A1A' }}
-                  >
-                    {activeBanner.title}
-                  </h1>
-
-                  <p 
-                    className="text-sm sm:text-base max-w-md leading-relaxed font-medium"
-                    style={{ color: activeBanner.text_color ? `${activeBanner.text_color}cc` : '#4A4A4A' }} // opacity 80% for subtitle
-                  >
-                    {activeBanner.subtitle}
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-4 pt-2">
+                  
+                  <div className="flex flex-wrap items-center gap-4 pt-4">
                     <Link
                       href={activeBanner.cta_link}
                       className="inline-flex items-center gap-2 bg-[#A61919] hover:bg-[#8B0000] text-white font-extrabold text-xs tracking-wider uppercase px-7 py-4 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105"
@@ -125,8 +116,8 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                       href="/category/spices"
                       className="inline-flex items-center gap-2 bg-transparent font-extrabold text-xs tracking-wider uppercase px-7 py-3.5 rounded-full transition-all duration-300 border-2 hover:bg-white/10"
                       style={{ 
-                        color: activeBanner.text_color || '#7F1D1D',
-                        borderColor: activeBanner.text_color || '#7F1D1D'
+                        color: activeBanner.text_color || '#FFFFFF',
+                        borderColor: activeBanner.text_color || '#FFFFFF'
                       }}
                     >
                       <span>EXPLORE SPICES</span>
@@ -134,32 +125,82 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                     </Link>
                   </div>
                 </div>
+              ) : (
+                /* Default Split Layout */
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[460px]">
+                  <div
+                    className="lg:col-span-6 space-y-6 z-10 py-6"
+                    style={{ color: activeBanner.text_color || '#1A1A1A' }}
+                  >
+                    {activeBanner.badge_text && (
+                      <span className="inline-block text-xs font-black tracking-widest uppercase text-brand-gold bg-brand-gold/10 px-3 py-1 rounded-full">
+                        {activeBanner.badge_text}
+                      </span>
+                    )}
 
-                <div className="lg:col-span-6 relative flex items-center justify-center min-h-[360px] sm:min-h-[420px]">
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[300px] sm:w-[420px] h-[300px] sm:h-[420px] rounded-full bg-brand-red/10 shadow-inner z-0 overflow-hidden" />
+                    <h1 
+                      className="font-heading text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.05] tracking-tight"
+                      style={{ color: activeBanner.text_color || '#1A1A1A' }}
+                    >
+                      {activeBanner.title}
+                    </h1>
 
-                  <div className="absolute top-2 right-4 sm:top-6 sm:right-8 z-30 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#FFF3E0] border-4 border-dashed border-[#A65E2E] flex flex-col items-center justify-center text-center p-2 shadow-lg">
-                    <span className="font-heading font-black text-lg sm:text-xl text-[#8B0000] leading-none">
-                      100%
-                    </span>
-                    <span className="text-[8px] font-extrabold text-[#7F1D1D] uppercase tracking-wider leading-tight mt-0.5">
-                      QUALITY
-                      <br />
-                      ASSURED
-                    </span>
+                    <p 
+                      className="text-sm sm:text-base max-w-md leading-relaxed font-medium"
+                      style={{ color: activeBanner.text_color ? `${activeBanner.text_color}cc` : '#4A4A4A' }} // opacity 80% for subtitle
+                    >
+                      {activeBanner.subtitle}
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-4 pt-2">
+                      <Link
+                        href={activeBanner.cta_link}
+                        className="inline-flex items-center gap-2 bg-[#A61919] hover:bg-[#8B0000] text-white font-extrabold text-xs tracking-wider uppercase px-7 py-4 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105"
+                      >
+                        <span>{activeBanner.cta_text}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+
+                      <Link
+                        href="/category/spices"
+                        className="inline-flex items-center gap-2 bg-transparent font-extrabold text-xs tracking-wider uppercase px-7 py-3.5 rounded-full transition-all duration-300 border-2 hover:bg-white/10"
+                        style={{ 
+                          color: activeBanner.text_color || '#7F1D1D',
+                          borderColor: activeBanner.text_color || '#7F1D1D'
+                        }}
+                      >
+                        <span>EXPLORE SPICES</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
                   </div>
 
-                  <div className="relative z-20 w-full h-[320px] sm:h-[400px]">
-                    <Image
-                      src={activeBanner.image_url}
-                      alt={activeBanner.title}
-                      fill
-                      className="object-contain drop-shadow-2xl"
-                      priority
-                    />
+                  <div className="lg:col-span-6 relative flex items-center justify-center min-h-[360px] sm:min-h-[420px]">
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[300px] sm:w-[420px] h-[300px] sm:h-[420px] rounded-full bg-brand-red/10 shadow-inner z-0 overflow-hidden" />
+
+                    <div className="absolute top-2 right-4 sm:top-6 sm:right-8 z-30 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#FFF3E0] border-4 border-dashed border-[#A65E2E] flex flex-col items-center justify-center text-center p-2 shadow-lg">
+                      <span className="font-heading font-black text-lg sm:text-xl text-[#8B0000] leading-none">
+                        100%
+                      </span>
+                      <span className="text-[8px] font-extrabold text-[#7F1D1D] uppercase tracking-wider leading-tight mt-0.5">
+                        QUALITY
+                        <br />
+                        ASSURED
+                      </span>
+                    </div>
+
+                    <div className="relative z-20 w-full h-[320px] sm:h-[400px]">
+                      <Image
+                        src={activeBanner.image_url}
+                        alt={activeBanner.title}
+                        fill
+                        className="object-contain drop-shadow-2xl"
+                        priority
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </motion.div>
         </AnimatePresence>
