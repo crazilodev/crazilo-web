@@ -55,7 +55,10 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
   }
 
   return (
-    <section className="relative overflow-hidden bg-[#FFF8F5] select-none py-6 sm:py-12 border-b border-gray-100">
+    <section
+      className="relative overflow-hidden select-none py-6 sm:py-12 border-b border-gray-100 transition-colors duration-500"
+      style={{ backgroundColor: activeBanner.bg_color || '#FFF8F5' }}
+    >
       <div className="relative min-h-[460px] sm:min-h-[500px] lg:min-h-[550px] overflow-hidden max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
@@ -74,16 +77,28 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
             {/* Left Content Column */}
             <div className="lg:col-span-6 flex flex-col justify-center space-y-6 text-left">
               {activeBanner.badge_text && (
-                <span className="inline-block text-[10px] font-black tracking-widest uppercase text-[#B91C1C] bg-[#B91C1C]/5 px-3 py-1 rounded-full w-max">
+                <span
+                  className="inline-block text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full w-max transition-colors duration-500"
+                  style={{
+                    color: activeBanner.text_color || '#B91C1C',
+                    backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(185, 28, 28, 0.05)'
+                  }}
+                >
                   {activeBanner.badge_text}
                 </span>
               )}
 
-              <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.08] tracking-tight text-[#2B1B17] uppercase">
+              <h1
+                className="font-heading text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.08] tracking-tight uppercase transition-colors duration-500"
+                style={{ color: activeBanner.text_color || '#2B1B17' }}
+              >
                 {activeBanner.title}
               </h1>
 
-              <p className="text-sm sm:text-base text-[#5C4D4A] max-w-md leading-relaxed font-medium">
+              <p
+                className="text-sm sm:text-base max-w-md leading-relaxed font-medium transition-colors duration-500"
+                style={{ color: activeBanner.text_color ? `${activeBanner.text_color}D9` : '#5C4D4A' }}
+              >
                 {activeBanner.subtitle}
               </p>
 
@@ -99,22 +114,54 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
               </div>
 
               {/* 3 Trust Indicators Below CTA */}
-              <div className="pt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#EFE7DD] mt-6">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#5C4D4A]">
-                  <div className="w-6 h-6 rounded-full bg-[#EFE7DD]/40 flex items-center justify-center border border-[#EFE7DD]">
-                    <Award className="w-3.5 h-3.5 text-[#B91C1C]" />
+              <div
+                className="pt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t mt-6 transition-colors duration-500"
+                style={{ borderColor: activeBanner.text_color ? `${activeBanner.text_color}26` : '#EFE7DD' }}
+              >
+                <div
+                  className="flex items-center gap-2 text-xs font-bold transition-colors duration-500"
+                  style={{ color: activeBanner.text_color || '#5C4D4A' }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center border transition-colors duration-500"
+                    style={{
+                      borderColor: activeBanner.text_color ? `${activeBanner.text_color}33` : '#EFE7DD',
+                      backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(239, 231, 221, 0.4)'
+                    }}
+                  >
+                    <Award className="w-3.5 h-3.5" style={{ color: activeBanner.text_color || '#B91C1C' }} />
                   </div>
                   <span>No Added Sugar</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs font-bold text-[#5C4D4A]">
-                  <div className="w-6 h-6 rounded-full bg-[#EFE7DD]/40 flex items-center justify-center border border-[#EFE7DD]">
-                    <Leaf className="w-3.5 h-3.5 text-[#B91C1C]" />
+                
+                <div
+                  className="flex items-center gap-2 text-xs font-bold transition-colors duration-500"
+                  style={{ color: activeBanner.text_color || '#5C4D4A' }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center border transition-colors duration-500"
+                    style={{
+                      borderColor: activeBanner.text_color ? `${activeBanner.text_color}33` : '#EFE7DD',
+                      backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(239, 231, 221, 0.4)'
+                    }}
+                  >
+                    <Leaf className="w-3.5 h-3.5" style={{ color: activeBanner.text_color || '#B91C1C' }} />
                   </div>
                   <span>All Natural Ingredients</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs font-bold text-[#5C4D4A]">
-                  <div className="w-6 h-6 rounded-full bg-[#EFE7DD]/40 flex items-center justify-center border border-[#EFE7DD]">
-                    <Shield className="w-3.5 h-3.5 text-[#B91C1C]" />
+
+                <div
+                  className="flex items-center gap-2 text-xs font-bold transition-colors duration-500"
+                  style={{ color: activeBanner.text_color || '#5C4D4A' }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center border transition-colors duration-500"
+                    style={{
+                      borderColor: activeBanner.text_color ? `${activeBanner.text_color}33` : '#EFE7DD',
+                      backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(239, 231, 221, 0.4)'
+                    }}
+                  >
+                    <Shield className="w-3.5 h-3.5" style={{ color: activeBanner.text_color || '#B91C1C' }} />
                   </div>
                   <span>No Preservatives</span>
                 </div>
@@ -122,22 +169,31 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
             </div>
 
             {/* Right Image Column */}
-            <div className="lg:col-span-6 relative flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
-              {/* Soft round background glow */}
-              <div className="absolute w-[280px] sm:w-[400px] h-[280px] sm:h-[400px] rounded-full bg-[#EFE7DD]/30 blur-2xl z-0" />
-              
-              <div className="relative z-10 w-full h-[285px] sm:h-[400px]">
-                <Image
-                  src={activeBanner.image_url}
-                  alt={activeBanner.title}
-                  fill
-                  className="object-contain drop-shadow-2xl"
-                  priority
+            <div className="lg:col-span-6 flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
+              <div className="relative w-full max-w-[280px] sm:max-w-[380px] lg:max-w-[420px] aspect-square flex items-center justify-center">
+                {/* Soft round background glow */}
+                <div
+                  className="absolute inset-0 rounded-full blur-2xl z-0 transition-colors duration-500"
+                  style={{
+                    backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(239, 231, 221, 0.3)'
+                  }}
                 />
+                
+                <div className="relative z-10 w-full h-full transform hover:scale-102 transition-transform duration-500">
+                  <Image
+                    src={activeBanner.image_url}
+                    alt={activeBanner.title}
+                    fill
+                    className="object-contain drop-shadow-2xl"
+                    priority
+                  />
+                </div>
               </div>
             </div>
           </motion.div>
         </AnimatePresence>
+
+
 
         {/* Carousel Arrow Controls */}
         {banners.length > 1 && (
