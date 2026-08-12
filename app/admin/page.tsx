@@ -383,37 +383,43 @@ export default function AdminDashboard() {
             </div>
             
             <div className="space-y-4">
-              {stats.topProducts.map((prod, i) => (
-                <div key={prod.id} className="flex items-center gap-3 text-sm">
-                  <span className="w-5 h-5 rounded-full bg-brand-red/10 text-brand-red text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                    {i + 1}
-                  </span>
-                  <div className="w-8 h-8 rounded-lg overflow-hidden relative bg-gray-50 flex-shrink-0">
-                    {prod.thumbnail_url ? (
-                      <Image
-                        src={prod.thumbnail_url}
-                        alt={prod.name}
-                        fill
-                        sizes="32px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 truncate leading-snug">
-                      {prod.name}
-                    </p>
-                    <p className="text-[10px] text-gray-400 font-medium">
-                      {formatPrice(prod.price)}
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold text-gray-700">
-                    {prod.total_sold} sold
-                  </span>
+              {stats.topProducts.length === 0 ? (
+                <div className="text-center py-6 text-gray-400 text-xs font-medium">
+                  No products sold yet
                 </div>
-              ))}
+              ) : (
+                stats.topProducts.map((prod, i) => (
+                  <div key={prod.id} className="flex items-center gap-3 text-sm">
+                    <span className="w-5 h-5 rounded-full bg-brand-red/10 text-brand-red text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                      {i + 1}
+                    </span>
+                    <div className="w-8 h-8 rounded-lg overflow-hidden relative bg-gray-50 flex-shrink-0">
+                      {prod.thumbnail_url ? (
+                        <Image
+                          src={prod.thumbnail_url}
+                          alt={prod.name}
+                          fill
+                          sizes="32px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 truncate leading-snug">
+                        {prod.name}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-medium">
+                        {formatPrice(prod.price)}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-gray-700">
+                      {prod.total_sold} sold
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

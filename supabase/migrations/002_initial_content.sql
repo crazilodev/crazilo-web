@@ -1,4 +1,4 @@
-﻿-- Crazilo initial content seed
+-- Crazilo initial content seed
 -- Seeds verified public content from the repository into the deployed schema.
 
 begin;
@@ -844,9 +844,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.8,
-    138,
-    138
+    0.0,
+    0,
+    0
   ),
   (
     'f0000000-0000-0000-0000-000000000003',
@@ -876,9 +876,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.8,
-    156,
-    156
+    0.0,
+    0,
+    0
   ),
   (
     'f0000000-0000-0000-0000-000000000004',
@@ -908,9 +908,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.9,
-    112,
-    112
+    0.0,
+    0,
+    0
   ),
   (
     'f0000000-0000-0000-0000-000000000005',
@@ -940,9 +940,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.7,
-    94,
-    94
+    0.0,
+    0,
+    0
   ),
   (
     'f0000000-0000-0000-0000-000000000006',
@@ -972,9 +972,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.8,
-    98,
-    98
+    0.0,
+    0,
+    0
   ),
   (
     'f0000000-0000-0000-0000-000000000007',
@@ -1004,9 +1004,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.8,
-    87,
-    87
+    0.0,
+    0,
+    0
   ),
   (
     'f0000000-0000-0000-0000-000000000008',
@@ -1036,9 +1036,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.7,
-    76,
-    76
+    0.0,
+    0,
+    0
   ),
   (
     'f0000000-0000-0000-0000-000000000009',
@@ -1068,9 +1068,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.8,
-    63,
-    63
+    0.0,
+    0,
+    0
   ),
   (
     'f0000000-0000-0000-0000-00000000000a',
@@ -1100,9 +1100,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.8,
-    82,
-    82
+    0.0,
+    0,
+    0
   ),
   (
     'f0000000-0000-0000-0000-00000000000b',
@@ -1132,9 +1132,9 @@ values
     null,
     ARRAY[]::text[],
     '{}'::jsonb,
-    4.9,
-    91,
-    91
+    0.0,
+    0,
+    0
   )
 on conflict (id) do update set
   name = excluded.name,

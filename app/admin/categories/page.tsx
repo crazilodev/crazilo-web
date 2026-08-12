@@ -14,6 +14,7 @@ import { slugify } from '@/lib/utils/slugify'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import ConfirmDialog from '@/components/admin/ConfirmDialog'
 import StatusBadge from '@/components/admin/StatusBadge'
+import Modal from '@/components/ui/Modal'
 import { categorySchema, CategoryFormData } from '@/lib/validations/categorySchema'
 import { createCategoryAction, updateCategoryAction, deleteCategoryAction } from '@/app/admin/categories/actions'
 import Image from 'next/image'
@@ -27,7 +28,7 @@ type CategoryTreeItem = Category & {
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -101,7 +102,7 @@ export default function AdminCategoriesPage() {
       is_active: cat.is_active,
       image_url: cat.image_url || '',
     })
-    setShowForm(true)
+    setShowModal(true)
   }
 
   // Handle category type change in form
@@ -145,7 +146,7 @@ export default function AdminCategoriesPage() {
       reset()
       setImages([])
       setEditing(null)
-      setShowForm(false)
+      setShowModal(false)
       await fetchCategories()
     } else {
       toast.error(result.error || 'Operation failed')
@@ -243,7 +244,7 @@ export default function AdminCategoriesPage() {
         action={
           <Button
             onClick={() => {
-              setShowForm(!showForm)
+              setShowModal(true)
               setEditing(null)
               reset()
               setImages([])
@@ -251,155 +252,160 @@ export default function AdminCategoriesPage() {
             }}
             variant="primary"
           >
-            <PlusCircle className="w-4 h-4" /> {showForm ? 'Cancel' : 'Add Category'}
+            <PlusCircle className="w-4 h-4" /> Add Category
           </Button>
         }
       />
 
       {/* Category Creation / Editing form panel */}
-      {showForm && (
-        <div className="bg-white rounded-2xl p-6 shadow-card border border-gray-150 animate-fade-in">
-          <h2 className="font-heading font-bold text-xl mb-5 text-gray-900">
-            {editing ? `Edit Category: ${editing.name}` : 'Create Category'}
-          </h2>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              
-              {/* Category Type selector */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Category Type *</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
-                    <input
-                      type="radio"
-                      checked={categoryType === 'main'}
-                      onChange={() => handleTypeChange('main')}
-                      className="accent-brand-red w-4 h-4"
-                      disabled={!!editing && mainCategories.some((c) => c.id === editing.id && subCategories.some((sub) => sub.parent_id === c.id))}
-                    />
-                    Main Category
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
-                    <input
-                      type="radio"
-                      checked={categoryType === 'sub'}
-                      onChange={() => handleTypeChange('sub')}
-                      className="accent-brand-red w-4 h-4"
-                      disabled={!!editing && mainCategories.some((c) => c.id === editing.id && subCategories.some((sub) => sub.parent_id === c.id))}
-                    />
-                    Subcategory
-                  </label>
-                </div>
-                {editing && mainCategories.some((c) => c.id === editing.id && subCategories.some((sub) => sub.parent_id === c.id)) && (
-                  <p className="text-[10px] text-amber-600 mt-1 font-medium">
-                    * Cannot convert type: subcategories are currently assigned to this category.
-                  </p>
-                )}
-              </div>
-
-              {/* Parent category selector (Subcategories only) */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Parent Category {categoryType === 'sub' && '*'}
-                </label>
-                <select
-                  {...register('parent_id')}
-                  disabled={categoryType === 'main'}
-                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm input-brand focus:ring-brand-red/35 disabled:bg-gray-50 disabled:cursor-not-allowed"
-                  id="cat-parent-select"
-                >
-                  <option value="">-- Select Parent Main Category --</option>
-                  {availableParents.map((parent) => (
-                    <option key={parent.id} value={parent.id}>
-                      {parent.name}
-                    </option>
-                  ))}
-                </select>
-                {categoryType === 'sub' && errors.parent_id && (
-                  <p className="mt-1 text-xs text-red-500">{errors.parent_id.message}</p>
-                )}
-              </div>
-
-              <Input
-                label="Category Name *"
-                {...register('name')}
-                error={errors.name?.message}
-                id="cat-name-input"
-              />
-
-              <Input
-                label="URL Slug *"
-                {...register('slug')}
-                error={errors.slug?.message}
-                id="cat-slug-input"
-              />
-
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
-                <textarea
-                  {...register('description')}
-                  rows={3}
-                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm input-brand resize-none"
-                  placeholder="Optional brief description of this category..."
-                  id="cat-description"
-                />
-              </div>
-
-              <Input
-                label="Sort Order"
-                type="number"
-                {...register('sort_order')}
-                error={errors.sort_order?.message}
-                id="cat-order-input"
-              />
-
-              <div className="flex items-center pt-8">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    {...register('is_active')}
-                    className="w-4 h-4 accent-brand-red rounded"
-                    id="cat-active-checkbox"
-                  />
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                    Active (visible on storefront)
-                  </span>
-                </label>
-              </div>
-
-            </div>
-
+      <Modal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setEditing(null)
+          reset()
+          setImages([])
+        }}
+        title={editing ? `Edit Category: ${editing.name}` : 'Create Category'}
+        size="lg"
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            
+            {/* Category Type selector */}
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">Category Banner Image</p>
-              <ImageUploader
-                bucket="category-images"
-                folder="categories"
-                images={images}
-                onImagesChange={handleImageChange}
-                maxFiles={1}
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Category Type *</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                  <input
+                    type="radio"
+                    checked={categoryType === 'main'}
+                    onChange={() => handleTypeChange('main')}
+                    className="accent-brand-red w-4 h-4"
+                    disabled={!!editing && mainCategories.some((c) => c.id === editing.id && subCategories.some((sub) => sub.parent_id === c.id))}
+                  />
+                  Main Category
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                  <input
+                    type="radio"
+                    checked={categoryType === 'sub'}
+                    onChange={() => handleTypeChange('sub')}
+                    className="accent-brand-red w-4 h-4"
+                    disabled={!!editing && mainCategories.some((c) => c.id === editing.id && subCategories.some((sub) => sub.parent_id === c.id))}
+                  />
+                  Subcategory
+                </label>
+              </div>
+              {editing && mainCategories.some((c) => c.id === editing.id && subCategories.some((sub) => sub.parent_id === c.id)) && (
+                <p className="text-[10px] text-amber-600 mt-1 font-medium">
+                  * Cannot convert type: subcategories are currently assigned to this category.
+                </p>
+              )}
+            </div>
+
+            {/* Parent category selector (Subcategories only) */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Parent Category {categoryType === 'sub' && '*'}
+              </label>
+              <select
+                {...register('parent_id')}
+                disabled={categoryType === 'main'}
+                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm input-brand focus:ring-brand-red/35 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                id="cat-parent-select"
+              >
+                <option value="">-- Select Parent Main Category --</option>
+                {availableParents.map((parent) => (
+                  <option key={parent.id} value={parent.id}>
+                    {parent.name}
+                  </option>
+                ))}
+              </select>
+              {categoryType === 'sub' && errors.parent_id && (
+                <p className="mt-1 text-xs text-red-500">{errors.parent_id.message}</p>
+              )}
+            </div>
+
+            <Input
+              label="Category Name *"
+              {...register('name')}
+              error={errors.name?.message}
+              id="cat-name-input"
+            />
+
+            <Input
+              label="URL Slug *"
+              {...register('slug')}
+              error={errors.slug?.message}
+              id="cat-slug-input"
+            />
+
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+              <textarea
+                {...register('description')}
+                rows={3}
+                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm input-brand resize-none"
+                placeholder="Optional brief description of this category..."
+                id="cat-description"
               />
             </div>
 
-            <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowForm(false)
-                  setEditing(null)
-                  reset()
-                  setImages([])
-                }}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary" loading={submitting} id="cat-submit-btn">
-                {editing ? 'Update Category' : 'Create Category'}
-              </Button>
+            <Input
+              label="Sort Order"
+              type="number"
+              {...register('sort_order')}
+              error={errors.sort_order?.message}
+              id="cat-order-input"
+            />
+
+            <div className="flex items-center pt-8">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  {...register('is_active')}
+                  className="w-4 h-4 accent-brand-red rounded"
+                  id="cat-active-checkbox"
+                />
+                <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                  Active (visible on storefront)
+                </span>
+              </label>
             </div>
-          </form>
-        </div>
-      )}
+
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-gray-700 mb-2">Category Banner Image</p>
+            <ImageUploader
+              bucket="category-images"
+              folder="categories"
+              images={images}
+              onImagesChange={handleImageChange}
+              maxFiles={1}
+            />
+          </div>
+
+          <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowModal(false)
+                setEditing(null)
+                reset()
+                setImages([])
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" loading={submitting} id="cat-submit-btn">
+              {editing ? 'Update Category' : 'Create Category'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Filters and Search toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
