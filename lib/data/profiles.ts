@@ -52,6 +52,7 @@ export async function getAdminCustomersList(
   let query = supabase
     .from('profiles')
     .select('*, orders(id, total_amount, status, created_at)', { count: 'exact' })
+    .eq('role', 'customer')
 
   // Status Filter
   if (status === 'active') {

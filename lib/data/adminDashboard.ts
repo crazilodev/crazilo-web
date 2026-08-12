@@ -42,7 +42,7 @@ export async function getAdminDashboardMetrics(supabase: any): Promise<Dashboard
     // 6. Recent Orders
     supabase.from('orders').select('*, items:order_items(count)').order('created_at', { ascending: false }).limit(5),
     // 7. Top Products
-    supabase.from('products').select('id, name, price, total_sold, thumbnail_url').order('total_sold', { ascending: false }).limit(5),
+    supabase.from('products').select('id, name, price, total_sold, thumbnail_url').gt('total_sold', 0).order('total_sold', { ascending: false }).limit(5),
     // 8. Recent Customers
     supabase.from('profiles').select('id, email, full_name, created_at').eq('role', 'customer').order('created_at', { ascending: false }).limit(5),
     // 9. Recent Reviews
