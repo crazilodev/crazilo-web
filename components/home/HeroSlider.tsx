@@ -1,9 +1,10 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { ArrowRight, Leaf, ShieldCheck, Package, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, Leaf, ShieldCheck, Package, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Banner, HomeHighlight } from '@/types'
 
 interface HeroSliderProps {
@@ -19,98 +20,190 @@ function getHeroIcon(iconKey: string) {
 }
 
 export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
-  const banner = banners[0]
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [direction, setDirection] = useState(0) // -1 for left, 1 for right
+
   const heroHighlights = highlights
     .filter((highlight) => highlight.icon_key.startsWith('hero_'))
     .sort((a, b) => a.display_order - b.display_order)
     .slice(0, 4)
 
-  if (!banner) return null
+  useEffect(() => {
+    if (banners.length <= 1) return
+
+    const interval = setInterval(() => {
+      setDirection(1)
+      setActiveIndex((prev) => (prev + 1) % banners.length)
+    }, 6000)
+
+    return () => clearInterval(interval)
+  }, [banners.length])
+
+  if (banners.length === 0) return null
+
+  const handlePrev = () => {
+    setDirection(-1)
+    setActiveIndex((prev) => (prev - 1 + banners.length) % banners.length)
+  }
+
+  const handleNext = () => {
+    setDirection(1)
+    setActiveIndex((prev) => (prev + 1) % banners.length)
+  }
+
+  const activeBanner = banners[activeIndex]
+
+  const slideVariants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? '100%' : '-100%',
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (dir: number) => ({
+      x: dir < 0 ? '100%' : '-100%',
+      opacity: 0,
+    }),
+  }
 
   return (
-    <section
-      className="relative bg-[#FFF5EA] overflow-hidden pt-6 pb-12 border-b border-[#EFE7DD]"
-      style={{ backgroundColor: banner.bg_color }}
-    >
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[520px]">
+    <section className="relative overflow-hidden border-b border-[#EFE7DD] select-none">
+      <div className="relative min-h-[520px] overflow-hidden">
+        <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="lg:col-span-6 space-y-6 z-10 py-6"
-            style={{ color: banner.text_color }}
+            key={activeIndex}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: 'spring', stiffness: 220, damping: 26 },
+              opacity: { duration: 0.35 },
+            }}
+            className="absolute inset-0 pt-6 pb-12 w-full h-full flex items-center"
+            style={{ backgroundColor: activeBanner.bg_color || '#FFF5EA' }}
           >
-            <span className="inline-block text-xs font-black tracking-widest uppercase text-[#A65E2E]">
-              {banner.badge_text}
-            </span>
+            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[460px]">
+                <div
+                  className="lg:col-span-6 space-y-6 z-10 py-6"
+                  style={{ color: activeBanner.text_color || '#1A1A1A' }}
+                >
+                  {activeBanner.badge_text && (
+                    <span className="inline-block text-xs font-black tracking-widest uppercase text-brand-gold bg-brand-gold/10 px-3 py-1 rounded-full">
+                      {activeBanner.badge_text}
+                    </span>
+                  )}
 
-            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-black text-[#1A1A1A] leading-[1.05] tracking-tight">
-              {banner.title}
-            </h1>
+                  <h1 
+                    className="font-heading text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.05] tracking-tight"
+                    style={{ color: activeBanner.text_color || '#1A1A1A' }}
+                  >
+                    {activeBanner.title}
+                  </h1>
 
-            <p className="text-gray-700 text-sm sm:text-base max-w-md leading-relaxed font-medium">
-              {banner.subtitle}
-            </p>
+                  <p 
+                    className="text-sm sm:text-base max-w-md leading-relaxed font-medium"
+                    style={{ color: activeBanner.text_color ? `${activeBanner.text_color}cc` : '#4A4A4A' }} // opacity 80% for subtitle
+                  >
+                    {activeBanner.subtitle}
+                  </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link
-                href={banner.cta_link}
-                className="inline-flex items-center gap-2 bg-[#A61919] hover:bg-[#8B0000] text-white font-extrabold text-xs tracking-wider uppercase px-7 py-4 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105"
-              >
-                <span>{banner.cta_text}</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+                  <div className="flex flex-wrap items-center gap-4 pt-2">
+                    <Link
+                      href={activeBanner.cta_link}
+                      className="inline-flex items-center gap-2 bg-[#A61919] hover:bg-[#8B0000] text-white font-extrabold text-xs tracking-wider uppercase px-7 py-4 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105"
+                    >
+                      <span>{activeBanner.cta_text}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
 
-              <Link
-                href="/category/spices"
-                className="inline-flex items-center gap-2 bg-transparent hover:bg-[#FAF0E6] text-[#7F1D1D] border-2 border-[#7F1D1D] font-extrabold text-xs tracking-wider uppercase px-7 py-3.5 rounded-full transition-all duration-300"
-              >
-                <span>EXPLORE SPICES</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+                    <Link
+                      href="/category/spices"
+                      className="inline-flex items-center gap-2 bg-transparent font-extrabold text-xs tracking-wider uppercase px-7 py-3.5 rounded-full transition-all duration-300 border-2 hover:bg-white/10"
+                      style={{ 
+                        color: activeBanner.text_color || '#7F1D1D',
+                        borderColor: activeBanner.text_color || '#7F1D1D'
+                      }}
+                    >
+                      <span>EXPLORE SPICES</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-6 relative flex items-center justify-center min-h-[360px] sm:min-h-[420px]">
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[300px] sm:w-[420px] h-[300px] sm:h-[420px] rounded-full bg-brand-red/10 shadow-inner z-0 overflow-hidden" />
+
+                  <div className="absolute top-2 right-4 sm:top-6 sm:right-8 z-30 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#FFF3E0] border-4 border-dashed border-[#A65E2E] flex flex-col items-center justify-center text-center p-2 shadow-lg">
+                    <span className="font-heading font-black text-lg sm:text-xl text-[#8B0000] leading-none">
+                      100%
+                    </span>
+                    <span className="text-[8px] font-extrabold text-[#7F1D1D] uppercase tracking-wider leading-tight mt-0.5">
+                      QUALITY
+                      <br />
+                      ASSURED
+                    </span>
+                  </div>
+
+                  <div className="relative z-20 w-full h-[320px] sm:h-[400px]">
+                    <Image
+                      src={activeBanner.image_url}
+                      alt={activeBanner.title}
+                      fill
+                      className="object-contain drop-shadow-2xl"
+                      priority
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
+        </AnimatePresence>
 
-          <div className="lg:col-span-6 relative flex items-center justify-center min-h-[420px] sm:min-h-[500px]">
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[340px] sm:w-[460px] h-[340px] sm:h-[460px] rounded-full bg-[#8B0000] shadow-2xl z-0 overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,_rgba(255,255,255,0.15)_0%,_transparent_70%)]" />
+        {banners.length > 1 && (
+          <>
+            <button
+              onClick={handlePrev}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-40 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg border border-gray-150 transition-all focus:outline-none"
+              aria-label="Previous banner"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleNext}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-40 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg border border-gray-150 transition-all focus:outline-none"
+              aria-label="Next banner"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2">
+              {banners.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setDirection(index > activeIndex ? 1 : -1)
+                    setActiveIndex(index)
+                  }}
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${
+                    activeIndex === index
+                      ? 'bg-brand-red w-6'
+                      : 'bg-gray-300 hover:bg-gray-400'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
             </div>
+          </>
+        )}
+      </div>
 
-            <motion.div
-              initial={{ scale: 0, rotate: -20 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.4, type: 'spring' }}
-              className="absolute top-2 right-4 sm:top-6 sm:right-8 z-30 w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#FFF3E0] border-4 border-dashed border-[#A65E2E] flex flex-col items-center justify-center text-center p-2 shadow-xl"
-            >
-              <span className="font-heading font-black text-xl sm:text-2xl text-[#8B0000] leading-none">
-                100%
-              </span>
-              <span className="text-[9px] font-extrabold text-[#7F1D1D] uppercase tracking-wider leading-tight mt-0.5">
-                QUALITY
-                <br />
-                ASSURED
-              </span>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative z-20 w-full h-[360px] sm:h-[460px] flex items-center justify-center"
-            >
-              <Image
-                src={banner.image_url}
-                alt={banner.title}
-                fill
-                className="object-contain drop-shadow-2xl"
-                priority
-              />
-            </motion.div>
-          </div>
-        </div>
-
-        <div className="pt-10 border-t border-[#EFE7DD]/80 mt-6">
+      <div className="bg-white py-8 border-t border-[#EFE7DD]/80">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {heroHighlights.map((highlight) => {
               const Icon = getHeroIcon(highlight.icon_key)

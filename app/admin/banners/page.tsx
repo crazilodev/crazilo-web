@@ -65,6 +65,7 @@ export default function AdminBannersPage() {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<BannerForm>({
     defaultValues: {
@@ -72,7 +73,7 @@ export default function AdminBannersPage() {
       cta_link: '/products',
       display_order: 0,
       is_active: true,
-      bg_color: '#8B0000',
+      bg_color: '#B91C1C',
       text_color: '#FFFFFF',
     },
   })
@@ -118,7 +119,7 @@ export default function AdminBannersPage() {
       cta_link: '/products',
       display_order: 0,
       is_active: true,
-      bg_color: '#8B0000',
+      bg_color: '#B91C1C',
       text_color: '#FFFFFF',
       starts_at: '',
       ends_at: '',
@@ -439,14 +440,30 @@ export default function AdminBannersPage() {
               <label htmlFor="bg_color" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
                 BG Color Hex
               </label>
-              <Input id="bg_color" placeholder="#8B0000" {...register('bg_color')} />
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={watch('bg_color') || '#8B0000'}
+                  onChange={(e) => setValue('bg_color', e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                />
+                <Input id="bg_color" placeholder="#8B0000" {...register('bg_color')} className="flex-1" />
+              </div>
             </div>
 
             <div>
               <label htmlFor="text_color" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
                 Text Color Hex
               </label>
-              <Input id="text_color" placeholder="#FFFFFF" {...register('text_color')} />
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={watch('text_color') || '#FFFFFF'}
+                  onChange={(e) => setValue('text_color', e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                />
+                <Input id="text_color" placeholder="#FFFFFF" {...register('text_color')} className="flex-1" />
+              </div>
             </div>
 
             <div>
