@@ -40,6 +40,7 @@ interface BannerForm {
   is_active: boolean
   bg_color: string
   text_color: string
+  is_full_width: boolean
   starts_at: string
   ends_at: string
 }
@@ -75,6 +76,7 @@ export default function AdminBannersPage() {
       is_active: true,
       bg_color: '#B91C1C',
       text_color: '#FFFFFF',
+      is_full_width: false,
     },
   })
 
@@ -121,6 +123,7 @@ export default function AdminBannersPage() {
       is_active: true,
       bg_color: '#B91C1C',
       text_color: '#FFFFFF',
+      is_full_width: false,
       starts_at: '',
       ends_at: '',
     })
@@ -140,6 +143,7 @@ export default function AdminBannersPage() {
       is_active: banner.is_active,
       bg_color: banner.bg_color || '#8B0000',
       text_color: banner.text_color || '#FFFFFF',
+      is_full_width: banner.is_full_width || false,
       starts_at: banner.starts_at ? new Date(banner.starts_at).toISOString().slice(0, 16) : '',
       ends_at: banner.ends_at ? new Date(banner.ends_at).toISOString().slice(0, 16) : '',
     })
@@ -487,10 +491,14 @@ export default function AdminBannersPage() {
               <Input id="display_order" type="number" {...register('display_order')} />
             </div>
 
-            <div className="flex items-center gap-2 pt-6">
+            <div className="flex flex-col gap-2.5 pt-6">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input id="is_active" type="checkbox" {...register('is_active')} className="w-4 h-4 rounded accent-brand-red" />
                 <span className="text-sm font-semibold text-gray-700">Active</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input id="is_full_width" type="checkbox" {...register('is_full_width')} className="w-4 h-4 rounded accent-brand-red" />
+                <span className="text-sm font-semibold text-gray-700">Full Width Layout (No Text)</span>
               </label>
             </div>
 

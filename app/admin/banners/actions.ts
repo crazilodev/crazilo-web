@@ -17,6 +17,7 @@ const bannerSchema = z.object({
   is_active: z.boolean().default(true),
   bg_color: z.string().max(20).trim().default('#8B0000'),
   text_color: z.string().max(20).trim().default('#FFFFFF'),
+  is_full_width: z.boolean().default(false),
   starts_at: z.string().nullable().optional().or(z.literal('')),
   ends_at: z.string().nullable().optional().or(z.literal('')),
 })
@@ -40,6 +41,7 @@ export async function createBannerAction(payload: any) {
         is_active: parsed.is_active,
         bg_color: parsed.bg_color,
         text_color: parsed.text_color,
+        is_full_width: parsed.is_full_width,
         starts_at: parsed.starts_at || null,
         ends_at: parsed.ends_at || null,
         updated_at: new Date().toISOString(),
@@ -83,6 +85,7 @@ export async function updateBannerAction(payload: any) {
         is_active: parsed.is_active,
         bg_color: parsed.bg_color,
         text_color: parsed.text_color,
+        is_full_width: parsed.is_full_width,
         starts_at: parsed.starts_at || null,
         ends_at: parsed.ends_at || null,
         updated_at: new Date().toISOString(),

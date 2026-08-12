@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Loader2, CheckCircle } from 'lucide-react'
+import { Mail, Loader2, CheckCircle, Sprout } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { subscribeToNewsletter } from '@/lib/data/newsletter'
 
@@ -31,72 +31,80 @@ export default function NewsletterSection() {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-br from-[#120202] via-[#7F1D1D] to-[#0F0F0F] relative overflow-hidden">
-      {/* Background radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-brand-gold/10 blur-3xl pointer-events-none" />
-
-      <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="max-w-2xl mx-auto text-center"
-        >
-          <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center mx-auto mb-6">
-            <Mail className="w-7 h-7 text-brand-gold" />
+    <section className="py-12 bg-white select-none">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Horizontal Promotion Box */}
+        <div className="bg-[#FFF8F0] border border-[#EFE7DD] rounded-[32px] p-6 sm:p-10 lg:p-12 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8">
+          
+          {/* Decorative leaves */}
+          <div className="absolute left-4 bottom-4 opacity-15 pointer-events-none select-none hidden lg:block">
+            <Sprout className="w-16 h-16 text-[#B91C1C]" />
           </div>
-          <h2 className="font-heading text-4xl font-extrabold text-white mb-3 tracking-tight">
-            Stay in the Loop
-          </h2>
-          <p className="text-white/80 text-base sm:text-lg mb-8 max-w-lg mx-auto">
-            Subscribe for exclusive member offers, new harvest arrivals, and healthy recipes. No spam, ever.
-          </p>
+          <div className="absolute right-4 top-4 opacity-15 pointer-events-none select-none hidden lg:block rotate-180">
+            <Sprout className="w-16 h-16 text-[#B91C1C]" />
+          </div>
 
-          {success ? (
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="flex items-center justify-center gap-3 bg-white/15 backdrop-blur-md rounded-full p-4 border border-white/30 max-w-md mx-auto"
-            >
-              <CheckCircle className="w-5 h-5 text-emerald-400" />
-              <p className="text-white font-bold text-sm">
-                You&apos;re subscribed! Welcome to the Crazilo family.
+          {/* Left Content Column */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 z-10 text-center sm:text-left max-w-xl">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-[#EFE7DD] flex items-center justify-center flex-shrink-0 shadow-sm">
+              <Mail className="w-6 h-6 sm:w-7 sm:h-7 text-[#B91C1C]" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-heading text-lg sm:text-xl font-black text-[#2B1B17] uppercase tracking-wider">
+                Stay Updated
+              </h3>
+              <p className="text-xs sm:text-sm text-[#5C4D4A] font-semibold leading-relaxed">
+                Subscribe to get special offers, new arrivals and healthy snack ideas.
               </p>
-            </motion.div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 p-2 bg-white rounded-full shadow-2xl border border-gray-100 max-w-xl mx-auto">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address..."
-                required
-                className="flex-1 px-6 py-3.5 bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none text-sm font-medium"
-                id="newsletter-email"
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-3.5 bg-brand-gold hover:bg-amber-600 text-white font-bold text-sm rounded-full transition-all duration-200 flex items-center justify-center gap-2 flex-shrink-0 shadow-md hover:shadow-lg disabled:opacity-70"
+            </div>
+          </div>
+
+          {/* Right Form Column */}
+          <div className="w-full lg:w-auto min-w-[280px] sm:min-w-[400px] z-10">
+            {success ? (
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex items-center justify-center gap-2 bg-[#E6F4EA] border border-[#A3CFBB] text-[#137333] rounded-full py-3 px-6 text-xs sm:text-sm font-bold"
               >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Subscribe Now'
-                )}
-              </button>
-            </form>
-          )}
+                <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                <span>You&apos;re subscribed! Welcome to the family.</span>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 p-1.5 bg-white rounded-2xl sm:rounded-full border border-[#EFE7DD] shadow-sm">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  required
+                  className="flex-1 px-4 sm:px-6 py-3 bg-transparent text-gray-800 placeholder:text-gray-400 focus:outline-none text-xs sm:text-sm font-semibold"
+                  id="newsletter-email"
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-[#7F1D1D] hover:bg-[#B91C1C] text-white font-extrabold text-xs tracking-wider uppercase px-6 sm:px-8 py-3.5 rounded-xl sm:rounded-full transition-colors flex items-center justify-center gap-2 disabled:opacity-75"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span>Subscribe</span>
+                  )}
+                </button>
+              </form>
+            )}
 
-          {error && (
-            <p className="mt-3 text-red-300 text-sm font-medium">{error}</p>
-          )}
+            {error && (
+              <p className="mt-2 text-[#B91C1C] text-xs font-semibold text-center lg:text-left pl-4">{error}</p>
+            )}
+          </div>
 
-          <p className="text-white/50 text-xs mt-5">
-            By subscribing, you agree to receive promotional emails. Unsubscribe anytime.
-          </p>
-        </motion.div>
+        </div>
+
       </div>
     </section>
   )
 }
+
