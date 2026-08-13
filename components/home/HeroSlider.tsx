@@ -49,6 +49,14 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
 
   const activeBanner = banners[activeIndex]
 
+  const bgColors = (activeBanner.bg_color || '').split(';')
+  const slideBgColor = bgColors[0] || '#FFF8F5'
+  const btnBgColor = bgColors[1] || '#7F1D1D'
+
+  const textColors = (activeBanner.text_color || '').split(';')
+  const textColor = textColors[0] || '#2B1B17'
+  const btnTextColor = textColors[1] || '#FFFFFF'
+
   const slideVariants = {
     enter: (dir: number) => ({
       x: dir > 0 ? '100%' : '-100%',
@@ -67,7 +75,7 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
   return (
     <section
       className="relative w-full overflow-hidden select-none border-b border-gray-100 transition-colors duration-500"
-      style={{ backgroundColor: activeBanner.bg_color || '#FFF8F5' }}
+      style={{ backgroundColor: slideBgColor }}
     >
       {/* 
         Hero Container with controlled responsive aspect ratio strategy:
@@ -103,22 +111,22 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                   priority
                 />
               ) : (
-                <div className="absolute inset-0 w-full h-full" style={{ backgroundColor: activeBanner.bg_color || '#FFF8F5' }} />
+                <div className="absolute inset-0 w-full h-full" style={{ backgroundColor: slideBgColor }} />
               )}
             </div>
 
             {/* Content Layer (Overlayed above background) */}
             <div className="relative z-10 w-full h-full flex items-center px-4 sm:px-6 lg:px-8">
               {!activeBanner.is_full_width ? (
-                <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center h-full py-4 sm:py-8">
+                <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center h-full pt-4 pb-20 sm:pt-8 sm:pb-24 lg:pt-8 lg:pb-28">
                   {/* Left Content Column */}
-                  <div className="lg:col-span-6 flex flex-col justify-center space-y-2 sm:space-y-4 text-left">
+                  <div className="lg:col-span-6 flex flex-col justify-center space-y-3 sm:space-y-5 text-left">
                     {activeBanner.badge_text && (
                       <span
                         className="inline-block text-[9px] sm:text-[10px] font-black tracking-widest uppercase px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full w-max transition-colors"
                         style={{
-                          color: activeBanner.text_color || '#B91C1C',
-                          backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(185, 28, 28, 0.05)'
+                          color: textColor,
+                          backgroundColor: textColor ? `${textColor}1A` : 'rgba(185, 28, 28, 0.05)'
                         }}
                       >
                         {activeBanner.badge_text}
@@ -127,81 +135,31 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
 
                     <h2
                       className="font-heading text-2xl sm:text-4xl lg:text-6xl font-black leading-[1.08] tracking-tight uppercase"
-                      style={{ color: activeBanner.text_color || '#2B1B17' }}
+                      style={{ color: textColor }}
                     >
                       {activeBanner.title}
                     </h2>
 
                     <p
                       className="text-[11px] sm:text-sm lg:text-base max-w-md leading-relaxed font-medium line-clamp-3 sm:line-clamp-none"
-                      style={{ color: activeBanner.text_color ? `${activeBanner.text_color}D9` : '#5C4D4A' }}
+                      style={{ color: textColor ? `${textColor}D9` : '#5C4D4A' }}
                     >
                       {activeBanner.subtitle}
                     </p>
 
                     {/* Action CTA */}
-                    <div className="pt-1.5">
+                    <div className="pt-2 sm:pt-4">
                       <Link
                         href={activeBanner.cta_link}
-                        className="inline-flex items-center gap-2 bg-[#7F1D1D] hover:bg-[#B91C1C] text-white font-extrabold text-[10px] sm:text-xs tracking-wider uppercase px-6 py-3.5 sm:px-8 sm:py-4 rounded-full transition-all duration-300 shadow-md hover:shadow-xl"
+                        className="inline-flex items-center gap-2 font-extrabold text-[10px] sm:text-xs tracking-wider uppercase px-6 py-3.5 sm:px-8 sm:py-4 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:brightness-110 active:brightness-95"
+                        style={{
+                          backgroundColor: btnBgColor,
+                          color: btnTextColor
+                        }}
                       >
                         <span>{activeBanner.cta_text || 'SHOP NOW'}</span>
                         <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </Link>
-                    </div>
-
-                    {/* 3 Trust Indicators Below CTA (Hidden on mobile for visual density) */}
-                    <div
-                      className="pt-4 hidden sm:flex flex-wrap items-center gap-x-5 gap-y-2 border-t mt-6 transition-colors duration-500"
-                      style={{ borderColor: activeBanner.text_color ? `${activeBanner.text_color}26` : '#EFE7DD' }}
-                    >
-                      <div
-                        className="flex items-center gap-2 text-xs font-bold transition-colors duration-500"
-                        style={{ color: activeBanner.text_color || '#5C4D4A' }}
-                      >
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center border transition-colors duration-500"
-                          style={{
-                            borderColor: activeBanner.text_color ? `${activeBanner.text_color}33` : '#EFE7DD',
-                            backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(239, 231, 221, 0.4)'
-                          }}
-                        >
-                          <Award className="w-3.5 h-3.5" style={{ color: activeBanner.text_color || '#B91C1C' }} />
-                        </div>
-                        <span>No Added Sugar</span>
-                      </div>
-                      
-                      <div
-                        className="flex items-center gap-2 text-xs font-bold transition-colors duration-500"
-                        style={{ color: activeBanner.text_color || '#5C4D4A' }}
-                      >
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center border transition-colors duration-500"
-                          style={{
-                            borderColor: activeBanner.text_color ? `${activeBanner.text_color}33` : '#EFE7DD',
-                            backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(239, 231, 221, 0.4)'
-                          }}
-                        >
-                          <Leaf className="w-3.5 h-3.5" style={{ color: activeBanner.text_color || '#B91C1C' }} />
-                        </div>
-                        <span>All Natural Ingredients</span>
-                      </div>
-
-                      <div
-                        className="flex items-center gap-2 text-xs font-bold transition-colors duration-500"
-                        style={{ color: activeBanner.text_color || '#5C4D4A' }}
-                      >
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center border transition-colors duration-500"
-                          style={{
-                            borderColor: activeBanner.text_color ? `${activeBanner.text_color}33` : '#EFE7DD',
-                            backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(239, 231, 221, 0.4)'
-                          }}
-                        >
-                          <Shield className="w-3.5 h-3.5" style={{ color: activeBanner.text_color || '#B91C1C' }} />
-                        </div>
-                        <span>No Preservatives</span>
-                      </div>
                     </div>
                   </div>
 
@@ -212,7 +170,7 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                       <div
                         className="absolute inset-0 rounded-full blur-2xl z-0 transition-colors duration-500"
                         style={{
-                          backgroundColor: activeBanner.text_color ? `${activeBanner.text_color}1A` : 'rgba(239, 231, 221, 0.3)'
+                          backgroundColor: textColor ? `${textColor}1A` : 'rgba(239, 231, 221, 0.3)'
                         }}
                       />
                       
@@ -233,29 +191,77 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                 <Link href={activeBanner.cta_link} className="absolute inset-0 w-full h-full cursor-pointer z-10" />
               )}
             </div>
+
+            {/* 3 Trust Indicators (Hidden on mobile for visual density) positioned absolutely at bottom left */}
+            {!activeBanner.is_full_width && (
+              <div
+                className="absolute bottom-6 left-4 sm:left-6 lg:left-8 z-20 hidden sm:flex flex-wrap items-center gap-x-5 gap-y-2 border-t pt-4 transition-colors duration-500 w-[calc(100%-2rem)] sm:max-w-[480px] md:max-w-[550px] lg:max-w-[650px]"
+                style={{ borderColor: textColor ? `${textColor}26` : '#EFE7DD' }}
+              >
+                <div
+                  className="flex items-center gap-2 text-xs font-bold transition-colors duration-500"
+                  style={{ color: textColor || '#5C4D4A' }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center border transition-colors duration-500"
+                    style={{
+                      borderColor: textColor ? `${textColor}33` : '#EFE7DD',
+                      backgroundColor: textColor ? `${textColor}1A` : 'rgba(239, 231, 221, 0.4)'
+                    }}
+                  >
+                    <Award className="w-3.5 h-3.5" style={{ color: textColor || '#B91C1C' }} />
+                  </div>
+                  <span>No Added Sugar</span>
+                </div>
+
+                <div
+                  className="flex items-center gap-2 text-xs font-bold transition-colors duration-500"
+                  style={{ color: textColor || '#5C4D4A' }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center border transition-colors duration-500"
+                    style={{
+                      borderColor: textColor ? `${textColor}33` : '#EFE7DD',
+                      backgroundColor: textColor ? `${textColor}1A` : 'rgba(239, 231, 221, 0.4)'
+                    }}
+                  >
+                    <Leaf className="w-3.5 h-3.5" style={{ color: textColor || '#B91C1C' }} />
+                  </div>
+                  <span>All Natural Ingredients</span>
+                </div>
+
+                <div
+                  className="flex items-center gap-2 text-xs font-bold transition-colors duration-500"
+                  style={{ color: textColor || '#5C4D4A' }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center border transition-colors duration-500"
+                    style={{
+                      borderColor: textColor ? `${textColor}33` : '#EFE7DD',
+                      backgroundColor: textColor ? `${textColor}1A` : 'rgba(239, 231, 221, 0.4)'
+                    }}
+                  >
+                    <Shield className="w-3.5 h-3.5" style={{ color: textColor || '#B91C1C' }} />
+                  </div>
+                  <span>No Preservatives</span>
+                </div>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
 
-        {/* Carousel Arrow Controls */}
+        {/* Carousel Unified Controls Console Pill */}
         {banners.length > 1 && (
-          <>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-4 md:right-6 lg:right-8 z-20 flex items-center gap-2 bg-white/95 backdrop-blur-md border border-gray-150/70 py-1.5 px-2.5 rounded-full shadow-sm hover:shadow-md transition-all">
             <button
               onClick={handlePrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-gray-700 p-2.5 rounded-full shadow border border-gray-150 transition-all hidden md:block hover:scale-105"
+              className="text-gray-500 hover:text-[#B91C1C] hover:bg-gray-100/70 p-1.5 rounded-full transition-colors flex items-center justify-center active:scale-95"
               aria-label="Previous banner"
             >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-gray-700 p-2.5 rounded-full shadow border border-gray-150 transition-all hidden md:block hover:scale-105"
-              aria-label="Next banner"
-            >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
 
-            {/* Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 px-2.5 border-l border-r border-gray-150">
               {banners.map((_, index) => (
                 <button
                   key={index}
@@ -263,19 +269,26 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                     setDirection(index > activeIndex ? 1 : -1)
                     setActiveIndex(index)
                   }}
-                  className={`w-2 h-2 rounded-full transition-all ${
+                  className={`h-1.5 rounded-full transition-all ${
                     activeIndex === index
-                      ? 'bg-[#B91C1C] w-4'
-                      : 'bg-gray-300 hover:bg-gray-400'
+                      ? 'bg-[#B91C1C] w-3.5'
+                      : 'bg-gray-300 hover:bg-gray-400 w-1.5'
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
             </div>
-          </>
+
+            <button
+              onClick={handleNext}
+              className="text-gray-500 hover:text-[#B91C1C] hover:bg-gray-100/70 p-1.5 rounded-full transition-colors flex items-center justify-center active:scale-95"
+              aria-label="Next banner"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
       </div>
     </section>
   )
 }
-

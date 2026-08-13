@@ -40,6 +40,8 @@ interface BannerForm {
   is_active: boolean
   bg_color: string
   text_color: string
+  btn_bg_color: string
+  btn_text_color: string
   is_full_width: boolean
   starts_at: string
   ends_at: string
@@ -78,6 +80,8 @@ export default function AdminBannersPage() {
       is_active: true,
       bg_color: '#B91C1C',
       text_color: '#FFFFFF',
+      btn_bg_color: '#7F1D1D',
+      btn_text_color: '#FFFFFF',
       is_full_width: false,
     },
   })
@@ -126,7 +130,9 @@ export default function AdminBannersPage() {
       display_order: 0,
       is_active: true,
       bg_color: '#B91C1C',
+      btn_bg_color: '#7F1D1D',
       text_color: '#FFFFFF',
+      btn_text_color: '#FFFFFF',
       is_full_width: false,
       starts_at: '',
       ends_at: '',
@@ -139,6 +145,10 @@ export default function AdminBannersPage() {
     setImages(banner.image_url ? [banner.image_url] : [])
     setMobileImages(banner.mobile_image_url ? [banner.mobile_image_url] : [])
     setPreviewMode('desktop')
+    
+    const bgColors = banner.bg_color ? banner.bg_color.split(';') : ['#8B0000']
+    const textColors = banner.text_color ? banner.text_color.split(';') : ['#FFFFFF']
+    
     reset({
       title: banner.title,
       subtitle: banner.subtitle || '',
@@ -147,8 +157,10 @@ export default function AdminBannersPage() {
       cta_link: banner.cta_link,
       display_order: banner.display_order,
       is_active: banner.is_active,
-      bg_color: banner.bg_color || '#8B0000',
-      text_color: banner.text_color || '#FFFFFF',
+      bg_color: bgColors[0] || '#8B0000',
+      btn_bg_color: bgColors[1] || '#7F1D1D',
+      text_color: textColors[0] || '#FFFFFF',
+      btn_text_color: textColors[1] || '#FFFFFF',
       is_full_width: banner.is_full_width || false,
       starts_at: banner.starts_at ? new Date(banner.starts_at).toISOString().slice(0, 16) : '',
       ends_at: banner.ends_at ? new Date(banner.ends_at).toISOString().slice(0, 16) : '',
@@ -180,15 +192,19 @@ export default function AdminBannersPage() {
 
     setSubmitting(true)
     try {
-      const payload = {
+      const payload: any = {
         ...formData,
         id: editing?.id,
+        bg_color: `${formData.bg_color};${formData.btn_bg_color}`,
+        text_color: `${formData.text_color};${formData.btn_text_color}`,
         image_url: images[0],
         mobile_image_url: mobileImages[0] || null,
         starts_at: formData.starts_at || null,
         ends_at: formData.ends_at || null,
         display_order: Number(formData.display_order),
       }
+      delete payload.btn_bg_color
+      delete payload.btn_text_color
 
       const result = editing
         ? await updateBannerAction(payload)
@@ -483,6 +499,36 @@ export default function AdminBannersPage() {
             </div>
 
             <div>
+              <label htmlFor="btn_bg_color" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Button BG Color Hex
+              </label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={watch('btn_bg_color') || '#7F1D1D'}
+                  onChange={(e) => setValue('btn_bg_color', e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                />
+                <Input id="btn_bg_color" placeholder="#7F1D1D" {...register('btn_bg_color')} className="flex-1" />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="btn_text_color" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Button Text Color Hex
+              </label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={watch('btn_text_color') || '#FFFFFF'}
+                  onChange={(e) => setValue('btn_text_color', e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                />
+                <Input id="btn_text_color" placeholder="#FFFFFF" {...register('btn_text_color')} className="flex-1" />
+              </div>
+            </div>
+
+            <div>
               <label htmlFor="starts_at" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
                 Starts At (Scheduling)
               </label>
@@ -607,7 +653,13 @@ export default function AdminBannersPage() {
                           {watch('subtitle') || 'Banner subtitle text...'}
                         </p>
                         <div className="pt-0.5">
-                          <span className="inline-block text-[7px] font-extrabold uppercase px-2 py-0.5 rounded-full text-white bg-black/30">
+                          <span
+                            className="inline-block text-[7px] font-extrabold uppercase px-2 py-0.5 rounded-full"
+                            style={{
+                              backgroundColor: watch('btn_bg_color') || '#7F1D1D',
+                              color: watch('btn_text_color') || '#FFFFFF'
+                            }}
+                          >
                             {watch('cta_text') || 'SHOP NOW'}
                           </span>
                         </div>
