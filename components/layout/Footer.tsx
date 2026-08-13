@@ -62,39 +62,39 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
             <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest mb-4">
               Shop
             </h4>
-            <ul className="space-y-3 text-xs font-semibold text-white/80">
+            <ul className="space-y-2 text-xs font-semibold text-white/80">
               <li>
-                <Link href="/products" className="hover:text-white transition-colors">
+                <Link href="/products" className="block py-1.5 hover:text-white transition-colors">
                   All Products
                 </Link>
               </li>
               <li>
-                <Link href="/category/nuts" className="hover:text-white transition-colors">
+                <Link href="/category/nuts" className="block py-1.5 hover:text-white transition-colors">
                   Nuts & Seeds
                 </Link>
               </li>
               <li>
-                <Link href="/category/dry-fruits" className="hover:text-white transition-colors">
+                <Link href="/category/dry-fruits" className="block py-1.5 hover:text-white transition-colors">
                   Dry Fruits
                 </Link>
               </li>
               <li>
-                <Link href="/category/makhana" className="hover:text-white transition-colors">
+                <Link href="/category/makhana" className="block py-1.5 hover:text-white transition-colors">
                   Makhana
                 </Link>
               </li>
               <li>
-                <Link href="/category/trail-mixes" className="hover:text-white transition-colors">
+                <Link href="/category/trail-mixes" className="block py-1.5 hover:text-white transition-colors">
                   Trail Mix
                 </Link>
               </li>
               <li>
-                <Link href="/category/combos" className="hover:text-white transition-colors">
+                <Link href="/category/combos" className="block py-1.5 hover:text-white transition-colors">
                   Combos
                 </Link>
               </li>
               <li>
-                <Link href="/category/gift-boxes" className="hover:text-white transition-colors">
+                <Link href="/category/gift-boxes" className="block py-1.5 hover:text-white transition-colors">
                   Gift Packs
                 </Link>
               </li>
@@ -106,24 +106,24 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
             <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest mb-4">
               Collections
             </h4>
-            <ul className="space-y-3 text-xs font-semibold text-white/80">
+            <ul className="space-y-2 text-xs font-semibold text-white/80">
               <li>
-                <Link href="/products?sort=popular" className="hover:text-white transition-colors">
+                <Link href="/products?sort=popular" className="block py-1.5 hover:text-white transition-colors">
                   Best Sellers
                 </Link>
               </li>
               <li>
-                <Link href="/products?filter=new" className="hover:text-white transition-colors">
+                <Link href="/products?filter=new" className="block py-1.5 hover:text-white transition-colors">
                   New Arrivals
                 </Link>
               </li>
               <li>
-                <Link href="/products" className="hover:text-white transition-colors">
+                <Link href="/products" className="block py-1.5 hover:text-white transition-colors">
                   Healthy Picks
                 </Link>
               </li>
               <li>
-                <Link href="/category/nuts" className="hover:text-white transition-colors">
+                <Link href="/category/nuts" className="block py-1.5 hover:text-white transition-colors">
                   Premium Nuts
                 </Link>
               </li>
@@ -135,29 +135,29 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
             <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest mb-4">
               Help
             </h4>
-            <ul className="space-y-3 text-xs font-semibold text-white/80">
+            <ul className="space-y-2 text-xs font-semibold text-white/80">
               <li>
-                <Link href="/orders" className="hover:text-white transition-colors">
+                <Link href="/orders" className="block py-1.5 hover:text-white transition-colors">
                   Track Order
                 </Link>
               </li>
               <li>
-                <Link href={siteSettings?.returns_policy_url || '#'} className="hover:text-white transition-colors">
+                <Link href={siteSettings?.returns_policy_url || '#'} className="block py-1.5 hover:text-white transition-colors">
                   Shipping & Delivery
                 </Link>
               </li>
               <li>
-                <Link href={siteSettings?.returns_policy_url || '#'} className="hover:text-white transition-colors">
+                <Link href={siteSettings?.returns_policy_url || '#'} className="block py-1.5 hover:text-white transition-colors">
                   Returns & Refunds
                 </Link>
               </li>
               <li>
-                <Link href={siteSettings?.faqs_url || '/faqs'} className="hover:text-white transition-colors">
+                <Link href={siteSettings?.faqs_url || '/faqs'} className="block py-1.5 hover:text-white transition-colors">
                   FAQs
                 </Link>
               </li>
               <li>
-                <Link href="#contact" className="hover:text-white transition-colors">
+                <Link href="#contact" className="block py-1.5 hover:text-white transition-colors">
                   Contact Us
                 </Link>
               </li>
@@ -169,16 +169,16 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
             <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest mb-4">
               Get In Touch
             </h4>
-            <ul className="space-y-2.5 text-xs font-semibold text-white/80">
+            <ul className="space-y-3 text-xs font-semibold text-white/80">
               <li className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-[#D97706] flex-shrink-0" />
-                <a href={`mailto:${siteSettings?.support_email || 'hello@crazilo.com'}`} className="hover:text-white transition-colors">
+                <a href={`mailto:${siteSettings?.support_email || 'hello@crazilo.com'}`} className="hover:text-white transition-colors py-1">
                   {siteSettings?.support_email || 'hello@crazilo.com'}
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5 text-[#D97706] flex-shrink-0" />
-                <a href={`tel:${siteSettings?.support_phone || '+919876543210'}`} className="hover:text-white transition-colors">
+                <a href={`tel:${siteSettings?.support_phone || '+919876543210'}`} className="hover:text-white transition-colors py-1">
                   {siteSettings?.support_phone || '+91 98765 43210'}
                 </a>
               </li>
@@ -186,7 +186,7 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
 
             {/* Store Locator Search Field */}
             <div className="pt-2">
-              <div className="relative max-w-[200px] cursor-pointer" onClick={() => router.push(storeLocatorHref)}>
+              <div className="relative w-full max-w-[280px] sm:max-w-[200px] cursor-pointer" onClick={() => router.push(storeLocatorHref)}>
                 <input
                   type="text"
                   placeholder="Store Locator"

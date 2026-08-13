@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -17,7 +18,13 @@ interface ProductCardProps {
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { addToCart } = useCart()
   const { hasItem, toggle } = useWishlist()
-  const isWishlisted = hasItem(product.id)
+  
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isWishlisted = mounted ? hasItem(product.id) : false
   const discount = calculateDiscount(product.price, product.compare_price)
   const thumbnail = product.thumbnail_url || product.images?.[0] || null
 
@@ -129,19 +136,20 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           </div>
 
           {/* Buttons Row */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => addToCart(product)}
               disabled={product.stock_quantity === 0 && product.track_inventory}
-              className={`flex-1 py-2 px-3 rounded-xl text-[10px] sm:text-xs font-black tracking-wider uppercase transition-colors flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 px-2 sm:px-3 rounded-xl text-[10px] sm:text-xs font-black tracking-wider uppercase transition-colors flex items-center justify-center gap-1 sm:gap-1.5 ${
                 product.stock_quantity === 0 && product.track_inventory
                   ? 'bg-gray-105 text-gray-400 cursor-not-allowed border border-gray-100'
                   : 'bg-[#7F1D1D] hover:bg-[#B91C1C] text-white shadow-sm'
               }`}
               id={`add-to-cart-${product.id}`}
             >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              <span>Add to Cart</span>
+              <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="hidden sm:inline">Add to </span>
+              <span>Cart</span>
             </button>
 
             {/* Wishlist Icon Button */}

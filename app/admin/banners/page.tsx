@@ -55,6 +55,8 @@ export default function AdminBannersPage() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Banner | null>(null)
   const [images, setImages] = useState<string[]>([])
+  const [mobileImages, setMobileImages] = useState<string[]>([])
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [submitting, setSubmitting] = useState(false)
 
   // Delete state
@@ -113,6 +115,8 @@ export default function AdminBannersPage() {
   const openCreate = () => {
     setEditing(null)
     setImages([])
+    setMobileImages([])
+    setPreviewMode('desktop')
     reset({
       title: '',
       subtitle: '',
@@ -133,6 +137,8 @@ export default function AdminBannersPage() {
   const openEdit = (banner: Banner) => {
     setEditing(banner)
     setImages(banner.image_url ? [banner.image_url] : [])
+    setMobileImages(banner.mobile_image_url ? [banner.mobile_image_url] : [])
+    setPreviewMode('desktop')
     reset({
       title: banner.title,
       subtitle: banner.subtitle || '',
@@ -154,11 +160,16 @@ export default function AdminBannersPage() {
     setShowModal(false)
     setEditing(null)
     setImages([])
+    setMobileImages([])
     reset()
   }
 
   const handleImagesChange = (urls: string[]) => {
     setImages(urls)
+  }
+
+  const handleMobileImagesChange = (urls: string[]) => {
+    setMobileImages(urls)
   }
 
   const onSubmit = async (formData: BannerForm) => {
@@ -173,6 +184,7 @@ export default function AdminBannersPage() {
         ...formData,
         id: editing?.id,
         image_url: images[0],
+        mobile_image_url: mobileImages[0] || null,
         starts_at: formData.starts_at || null,
         ends_at: formData.ends_at || null,
         display_order: Number(formData.display_order),
@@ -502,11 +514,122 @@ export default function AdminBannersPage() {
               </label>
             </div>
 
+            <div className="sm:col-span-2 bg-amber-50/50 border border-amber-200/50 rounded-xl p-3 text-xs text-amber-800 space-y-1">
+              <p className="font-bold">💡 Banner Composition Guide</p>
+              <p>You can upload images of any size/ratio. The storefront separates text from photos to prevent overlapping. The container maintains a stable responsive aspect-ratio. For full-width banners, recommend using high-resolution files with details centered.</p>
+            </div>
+
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
-                Banner Image *
+                Banner Image * (Desktop layout or Default)
               </label>
               <ImageUploader bucket="banner-images" folder="hero" images={images} onImagesChange={handleImagesChange} maxFiles={1} />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                Mobile Banner Image (Optional - will crop desktop image if empty)
+              </label>
+              <ImageUploader bucket="banner-images" folder="hero" images={mobileImages} onImagesChange={handleMobileImagesChange} maxFiles={1} />
+            </div>
+
+            {/* Real-time storefront preview simulator */}
+            <div className="sm:col-span-2 border border-gray-150 rounded-2xl p-4 bg-gray-50/50 space-y-3">
+              <div className="flex justify-between items-center">
+                <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Live Storefront Preview</p>
+                <div className="flex rounded-lg border border-gray-200 overflow-hidden text-[10px] font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode('desktop')}
+                    className={`px-2.5 py-1 transition-colors ${previewMode === 'desktop' ? 'bg-gray-900 text-white' : 'bg-white text-gray-650 hover:bg-gray-100'}`}
+                  >
+                    Desktop View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode('mobile')}
+                    className={`px-2.5 py-1 transition-colors ${previewMode === 'mobile' ? 'bg-gray-900 text-white' : 'bg-white text-gray-650 hover:bg-gray-100'}`}
+                  >
+                    Mobile View
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className="relative w-full border border-gray-200 rounded-xl overflow-hidden shadow-inner mx-auto transition-all duration-300 flex items-center"
+                style={{
+                  backgroundColor: watch('bg_color') || '#8B0000',
+                  maxWidth: previewMode === 'desktop' ? '100%' : '280px',
+                  aspectRatio: previewMode === 'desktop' ? '16/6' : '4/5.2',
+                }}
+              >
+                {/* Background image preview */}
+                <div className="absolute inset-0 w-full h-full z-0">
+                  {watch('is_full_width') ? (
+                    (previewMode === 'mobile' && mobileImages[0]) ? (
+                      <Image src={mobileImages[0]} alt="Mobile preview" fill className="object-cover object-center" unoptimized />
+                    ) : images[0] ? (
+                      <Image src={images[0]} alt="Desktop preview" fill className="object-cover object-center" unoptimized />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white/40 text-[10px]">No image uploaded</div>
+                    )
+                  ) : (
+                    <div className="absolute inset-0 w-full h-full" style={{ backgroundColor: watch('bg_color') || '#8B0000' }} />
+                  )}
+                </div>
+
+                {/* Content text preview */}
+                <div className="relative z-10 w-full h-full flex items-center px-4">
+                  {!watch('is_full_width') ? (
+                    <div className="w-full grid grid-cols-12 gap-2 items-center h-full py-2">
+                      <div className="col-span-8 flex flex-col justify-center space-y-1 text-left">
+                        {watch('badge_text') && (
+                          <span
+                            className="inline-block text-[7px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded-full w-max"
+                            style={{
+                              color: watch('text_color') || '#FFFFFF',
+                              backgroundColor: watch('text_color') ? `${watch('text_color')}20` : 'rgba(255,255,255,0.1)'
+                            }}
+                          >
+                            {watch('badge_text')}
+                          </span>
+                        )}
+                        <h4
+                          className="font-heading text-xs font-black leading-tight uppercase truncate"
+                          style={{ color: watch('text_color') || '#FFFFFF' }}
+                        >
+                          {watch('title') || 'Banner Title'}
+                        </h4>
+                        <p
+                          className="text-[9px] font-medium leading-relaxed truncate"
+                          style={{ color: watch('text_color') ? `${watch('text_color')}D9` : '#FFFFFFD9' }}
+                        >
+                          {watch('subtitle') || 'Banner subtitle text...'}
+                        </p>
+                        <div className="pt-0.5">
+                          <span className="inline-block text-[7px] font-extrabold uppercase px-2 py-0.5 rounded-full text-white bg-black/30">
+                            {watch('cta_text') || 'SHOP NOW'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="col-span-4 flex items-center justify-center h-full">
+                        {images[0] ? (
+                          <div className="relative w-10 h-10 aspect-square flex items-center justify-center">
+                            <Image src={images[0]} alt="product preview" fill className="object-contain" unoptimized />
+                          </div>
+                        ) : (
+                          <div className="text-[7px] text-white/40">No photo</div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black/10 text-white/50 text-[9px] font-bold">
+                      Full Width Layout Mode (No text overlay)
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 

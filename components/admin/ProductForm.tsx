@@ -364,86 +364,170 @@ export default function ProductForm({ product }: ProductFormProps) {
             No variants specified for this product.
           </div>
         ) : (
-          <div className="overflow-x-auto border border-gray-200 rounded-xl">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-gray-500 font-semibold uppercase">
-                  <th className="px-4 py-3">Variant Name *</th>
-                  <th className="px-4 py-3">SKU</th>
-                  <th className="px-4 py-3">Price (₹) *</th>
-                  <th className="px-4 py-3">Stock *</th>
-                  <th className="px-4 py-3">Weight (g)</th>
-                  <th className="px-4 py-3 text-center">Active</th>
-                  <th className="px-4 py-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {variants.map((v, index) => (
-                  <tr key={index} className="hover:bg-gray-50/20">
-                    <td className="px-3 py-2">
-                      <input
-                        type="text"
-                        value={v.name}
-                        onChange={(e) => handleUpdateVariantField(index, 'name', e.target.value)}
-                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand focus:ring-1 focus:ring-brand-red/35"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto border border-gray-200 rounded-xl">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200 text-gray-500 font-semibold uppercase">
+                    <th className="px-4 py-3">Variant Name *</th>
+                    <th className="px-4 py-3">SKU</th>
+                    <th className="px-4 py-3">Price (₹) *</th>
+                    <th className="px-4 py-3">Stock *</th>
+                    <th className="px-4 py-3">Weight (g)</th>
+                    <th className="px-4 py-3 text-center">Active</th>
+                    <th className="px-4 py-3 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {variants.map((v, index) => (
+                    <tr key={index} className="hover:bg-gray-50/20">
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          value={v.name}
+                          onChange={(e) => handleUpdateVariantField(index, 'name', e.target.value)}
+                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand focus:ring-1 focus:ring-brand-red/35"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          value={v.sku || ''}
+                          onChange={(e) => handleUpdateVariantField(index, 'sku', e.target.value || null)}
+                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          value={v.price}
+                          onChange={(e) => handleUpdateVariantField(index, 'price', Number(e.target.value))}
+                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          value={v.stock_quantity}
+                          disabled={!!v.id}
+                          onChange={(e) => handleUpdateVariantField(index, 'stock_quantity', Number(e.target.value))}
+                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          title={v.id ? "Stock quantity of existing variants can only be updated in the Inventory tab." : ""}
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          value={v.weight_grams || ''}
+                          onChange={(e) => handleUpdateVariantField(index, 'weight_grams', e.target.value ? Number(e.target.value) : null)}
+                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={v.is_active}
+                          onChange={(e) => handleUpdateVariantField(index, 'is_active', e.target.checked)}
+                          className="w-4 h-4 accent-brand-red rounded"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setVariants(variants.filter((_, i) => i !== index))}
+                          className="text-red-550 hover:text-red-700 text-xs font-semibold transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Stacked Card View */}
+            <div className="md:hidden space-y-4">
+              {variants.map((v, index) => (
+                <div key={index} className="bg-gray-50/50 p-4 rounded-xl border border-gray-200 space-y-3 relative text-xs">
+                  <div className="absolute top-3 right-3">
+                    <button
+                      type="button"
+                      onClick={() => setVariants(variants.filter((_, i) => i !== index))}
+                      className="text-red-550 hover:text-red-700 text-xs font-semibold transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Variant Name *</label>
+                    <input
+                      type="text"
+                      value={v.name}
+                      onChange={(e) => handleUpdateVariantField(index, 'name', e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-gray-200 rounded bg-white input-brand focus:ring-1 focus:ring-brand-red/35"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">SKU</label>
                       <input
                         type="text"
                         value={v.sku || ''}
                         onChange={(e) => handleUpdateVariantField(index, 'sku', e.target.value || null)}
-                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand"
+                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded bg-white input-brand"
                       />
-                    </td>
-                    <td className="px-3 py-2">
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Price (₹) *</label>
                       <input
                         type="number"
                         value={v.price}
                         onChange={(e) => handleUpdateVariantField(index, 'price', Number(e.target.value))}
-                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand"
+                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded bg-white input-brand"
                       />
-                    </td>
-                    <td className="px-3 py-2">
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Stock *</label>
                       <input
                         type="number"
                         value={v.stock_quantity}
                         disabled={!!v.id}
                         onChange={(e) => handleUpdateVariantField(index, 'stock_quantity', Number(e.target.value))}
-                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded bg-white input-brand disabled:bg-gray-105 disabled:cursor-not-allowed"
                         title={v.id ? "Stock quantity of existing variants can only be updated in the Inventory tab." : ""}
                       />
-                    </td>
-                    <td className="px-3 py-2">
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Weight (g)</label>
                       <input
                         type="number"
                         value={v.weight_grams || ''}
                         onChange={(e) => handleUpdateVariantField(index, 'weight_grams', e.target.value ? Number(e.target.value) : null)}
-                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white input-brand"
+                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded bg-white input-brand"
                       />
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={v.is_active}
-                        onChange={(e) => handleUpdateVariantField(index, 'is_active', e.target.checked)}
-                        className="w-4 h-4 accent-brand-red rounded"
-                      />
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => setVariants(variants.filter((_, i) => i !== index))}
-                        className="text-red-500 hover:text-red-700 text-xs font-semibold transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="checkbox"
+                      checked={v.is_active}
+                      onChange={(e) => handleUpdateVariantField(index, 'is_active', e.target.checked)}
+                      className="w-4 h-4 accent-brand-red rounded"
+                      id={`var-active-mobile-${index}`}
+                    />
+                    <label htmlFor={`var-active-mobile-${index}`} className="text-xs font-bold text-gray-700">
+                      Active
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

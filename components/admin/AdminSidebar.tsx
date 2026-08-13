@@ -11,6 +11,7 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAdminSidebarStore } from '@/lib/store/adminSidebarStore'
 
 const navGroups = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
@@ -63,9 +64,32 @@ const navGroups = [
 export default function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
+  const { isOpen, close } = useAdminSidebarStore()
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const [pendingCounts, setPendingCounts] = useState({ orders: 0, reviews: 0 })
+
+  // Prevent background scrolling when sidebar is open on mobile
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
+
+  // Close sidebar on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        close()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [close])
 
   useEffect(() => {
     const groupsToOpen: Record<string, boolean> = {}
@@ -157,7 +181,7 @@ export default function AdminSidebar() {
               <Link
                 key={group.href}
                 href={group.href!}
-                onClick={() => setIsOpen(false)}
+                onClick={close}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
                   isActive
                     ? 'bg-brand-red text-white shadow-lg shadow-brand-red/30'
@@ -211,7 +235,7 @@ export default function AdminSidebar() {
                       <Link
                         key={child.href}
                         href={child.href}
-                        onClick={() => setIsOpen(false)}
+                        onClick={close}
                         className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 ${
                           isChildActive
                             ? 'text-white bg-brand-red shadow-md shadow-brand-red/20'
@@ -257,20 +281,11 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile toggle */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-[200] w-10 h-10 bg-brand-dark rounded-xl flex items-center justify-center text-white shadow-lg"
-        aria-label="Toggle sidebar"
-      >
-        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
-
       {/* Mobile overlay */}
       {isOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/60 z-[150]"
-          onClick={() => setIsOpen(false)}
+          onClick={close}
         />
       )}
 

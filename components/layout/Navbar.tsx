@@ -54,6 +54,37 @@ export default function Navbar() {
     fetchData()
   }, [])
 
+  // Prevent background scrolling when mobile menu or search drawer is active
+  useEffect(() => {
+    if (showMobileMenu || showSearch) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [showMobileMenu, showSearch])
+
+  // Support closing modals and drawers with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowMobileMenu(false)
+        setShowSearch(false)
+        setShowUserMenu(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // Auto-close mobile menu on route transitions
+  useEffect(() => {
+    setShowMobileMenu(false)
+    setShowSearch(false)
+  }, [pathname])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
@@ -84,16 +115,16 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm transition-all duration-200">
-      <nav className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
+      <nav className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
           
           {/* Mobile menu toggle */}
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="lg:hidden p-2 text-gray-700 hover:text-[#B91C1C]"
+            className="lg:hidden p-1.5 text-gray-700 hover:text-[#B91C1C] transition-colors"
             aria-label="Toggle mobile menu"
           >
-            {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {showMobileMenu ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
           </button>
 
           {/* Crazilo Brand Logo */}
@@ -101,9 +132,9 @@ export default function Navbar() {
             <Image
               src="/logo/crazilo-logo.png"
               alt="Crazilo Dryfruits and Spices"
-              width={160}
-              height={56}
-              className="h-10 lg:h-12 w-auto object-contain"
+              width={140}
+              height={48}
+              className="h-8 sm:h-10 lg:h-12 w-auto object-contain"
               priority
             />
           </Link>
@@ -170,7 +201,7 @@ export default function Navbar() {
           </div>
 
           {/* Right Action Items: Search field + Account + Cart */}
-          <div className="flex items-center gap-4 flex-1 justify-end max-w-lg">
+          <div className="flex items-center gap-1.5 sm:gap-4 flex-1 justify-end max-w-lg">
             
             {/* Inline search bar (Visible on desktop) */}
             <form onSubmit={handleSearch} className="relative hidden md:block w-full max-w-[280px]">
@@ -189,7 +220,7 @@ export default function Navbar() {
             {/* Mobile search trigger */}
             <button
               onClick={() => setShowSearch(true)}
-              className="md:hidden p-2 text-gray-700 hover:text-[#B91C1C]"
+              className="md:hidden p-1.5 text-gray-700 hover:text-[#B91C1C] transition-colors"
               aria-label="Search"
             >
               <Search className="w-5 h-5" />
@@ -201,7 +232,7 @@ export default function Navbar() {
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="p-1.5 text-gray-755 hover:text-[#B91C1C] rounded-full transition-colors flex items-center justify-center border border-gray-100 shadow-sm"
+                    className="p-1 text-gray-755 hover:text-[#B91C1C] rounded-full transition-colors flex items-center justify-center border border-gray-100 shadow-sm"
                   >
                     <div className="w-7 h-7 rounded-full bg-[#B91C1C] text-white flex items-center justify-center text-[11px] font-bold">
                       {profile?.full_name?.charAt(0) || user.email?.charAt(0)?.toUpperCase() || 'U'}
@@ -231,7 +262,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/auth/login"
-                  className="p-2 text-gray-750 hover:text-[#B91C1C] hover:bg-[#FFF8F0] rounded-full transition-colors inline-flex items-center border border-gray-100"
+                  className="p-1.5 text-gray-750 hover:text-[#B91C1C] hover:bg-[#FFF8F0] rounded-full transition-colors inline-flex items-center border border-gray-100"
                   aria-label="Sign In"
                 >
                   <User className="w-4 h-4" />
@@ -242,7 +273,7 @@ export default function Navbar() {
             {/* Cart Button */}
             <button
               onClick={toggleCart}
-              className="relative p-2 text-gray-750 hover:text-[#B91C1C] hover:bg-[#FFF8F0] rounded-full transition-colors inline-flex items-center border border-gray-100"
+              className="relative p-1.5 text-gray-750 hover:text-[#B91C1C] hover:bg-[#FFF8F0] rounded-full transition-colors inline-flex items-center border border-gray-100"
               aria-label="Cart"
               id="cart-toggle-btn"
             >

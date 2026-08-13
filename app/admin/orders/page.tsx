@@ -127,7 +127,8 @@ export default function AdminOrdersPage() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full data-table">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
@@ -213,7 +214,7 @@ export default function AdminOrdersPage() {
                             const isCurrent = order.status === s
                             const isAllowed = canTransitionOrderStatus(order.status as any, s as any)
                             return (
-                              <option
+                               <option
                                 key={s}
                                 value={s}
                                 disabled={!isCurrent && !isAllowed}
@@ -234,6 +235,87 @@ export default function AdminOrdersPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View */}
+        <div className="md:hidden divide-y divide-gray-100 p-4 space-y-4">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="skeleton h-32 rounded-2xl" />
+            ))
+          ) : orders.length === 0 ? (
+            <p className="text-center py-8 text-gray-400 text-sm">No orders found</p>
+          ) : (
+            orders.map((order) => (
+              <div key={order.id} className="bg-gray-50/50 rounded-2xl border border-gray-100 p-4 flex flex-col gap-3 text-xs">
+                {/* Top row */}
+                <div className="flex justify-between items-center">
+                  <span className="font-mono font-bold text-sm text-gray-900">#{order.order_number}</span>
+                  <span className="text-gray-450">
+                    {new Date(order.created_at).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </span>
+                </div>
+
+                {/* Customer */}
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">Customer</p>
+                  <p className="font-semibold text-gray-850">{(order.shipping_address as any)?.full_name || '—'}</p>
+                  <p className="text-[10px] text-gray-400">{(order.shipping_address as any)?.phone}</p>
+                </div>
+
+                {/* Stats grid */}
+                <div className="grid grid-cols-2 gap-2.5 border-t border-b border-gray-100 py-3 my-1">
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">Items</p>
+                    <p className="font-bold text-gray-800">{(order.items || []).length} items</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">Amount</p>
+                    <p className="font-bold text-brand-red">{formatPrice(order.total_amount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">Payment</p>
+                    <div className="mt-0.5">
+                      <StatusBadge status={order.payment_status} type="payment" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">Fulfillment</p>
+                    <div className="mt-0.5 relative inline-block">
+                      <select
+                        value={order.status}
+                        onChange={(e) =>
+                          handleStatusChange(order.id, order.status, e.target.value)
+                        }
+                        className={`text-[10px] font-bold rounded-full px-2.5 py-1 border border-gray-150 cursor-pointer ${
+                          STATUS_COLORS[order.status]
+                        } focus:outline-none`}
+                      >
+                        {STATUSES.filter((s) => s !== 'all').map((s) => {
+                          const isCurrent = order.status === s
+                          const isAllowed = canTransitionOrderStatus(order.status as any, s as any)
+                          return (
+                            <option
+                              key={s}
+                              value={s}
+                              disabled={!isCurrent && !isAllowed}
+                              className="bg-white text-gray-900 capitalize font-sans disabled:text-gray-200"
+                            >
+                              {s}
+                            </option>
+                          )
+                        })}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
