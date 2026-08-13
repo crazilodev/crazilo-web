@@ -242,7 +242,8 @@ export default function AdminDashboard() {
               </Link>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-100">
@@ -306,6 +307,58 @@ export default function AdminDashboard() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Stacked Card View */}
+            <div className="md:hidden p-4 divide-y divide-gray-100 space-y-3">
+              {stats.recentOrders.length === 0 ? (
+                <p className="text-center py-6 text-gray-400 text-xs">No orders registered yet</p>
+              ) : (
+                stats.recentOrders.map((order: any) => (
+                  <div key={order.id} className="p-3 bg-gray-50/50 rounded-xl border border-gray-100 flex flex-col gap-2 text-xs">
+                    <div className="flex justify-between items-center font-mono">
+                      <span className="font-bold text-gray-900">
+                        <Link href={`/admin/orders/${order.id}`} className="hover:underline text-brand-red">
+                          #{order.order_number}
+                        </Link>
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-sans">
+                        {new Date(order.created_at).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-brand-red">{formatPrice(order.total_amount)}</span>
+                      <div className="flex gap-1.5">
+                        <span
+                          className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                            order.status === 'delivered'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : order.status === 'pending'
+                              ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                              : order.status === 'cancelled'
+                              ? 'bg-red-50 text-red-700 border border-red-200'
+                              : 'bg-blue-50 text-blue-700 border border-blue-200'
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                        <span
+                          className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                            order.payment_status === 'paid'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-gray-105 text-gray-600'
+                          }`}
+                        >
+                          {order.payment_status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

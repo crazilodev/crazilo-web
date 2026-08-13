@@ -321,6 +321,7 @@ export type Database = {
           is_active: boolean
           bg_color: string
           text_color: string
+          is_full_width: boolean
           starts_at: string | null
           ends_at: string | null
           created_at: string
@@ -339,6 +340,7 @@ export type Database = {
           is_active?: boolean
           bg_color?: string
           text_color?: string
+          is_full_width?: boolean
           starts_at?: string | null
           ends_at?: string | null
           created_at?: string
@@ -357,6 +359,7 @@ export type Database = {
           is_active?: boolean
           bg_color?: string
           text_color?: string
+          is_full_width?: boolean
           starts_at?: string | null
           ends_at?: string | null
           created_at?: string
