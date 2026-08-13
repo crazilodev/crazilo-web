@@ -1,10 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
-  Phone, Mail, MapPin, Instagram, Facebook, Youtube, Heart, MessageSquare
+  Phone, Mail, MapPin, Instagram, Facebook, Youtube, Heart, MessageSquare, ChevronDown
 } from 'lucide-react'
 import type { Category, SiteSettings } from '@/types'
 
@@ -17,11 +18,16 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
   const router = useRouter()
   const currentYear = new Date().getFullYear()
   const storeLocatorHref = siteSettings?.store_locator_url || '/store-locator'
+  
+  const [openSection, setOpenSection] = useState<string | null>(null)
+  const toggleSection = (section: string) => {
+    setOpenSection(openSection === section ? null : section)
+  }
 
   const socialLinks = [
     { icon: Facebook, href: siteSettings?.facebook_url || '#', label: 'Facebook' },
     { icon: Instagram, href: siteSettings?.instagram_url || '#', label: 'Instagram' },
-    { icon: MessageSquare, href: '#', label: 'WhatsApp' }, // WhatsApp if supported
+    { icon: MessageSquare, href: '#', label: 'WhatsApp' },
     { icon: Youtube, href: siteSettings?.youtube_url || '#', label: 'YouTube' },
   ]
 
@@ -29,7 +35,7 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
     <footer className="bg-[#5C0A0A] text-white select-none border-t border-white/5 pt-16 pb-8">
       {/* 5-Column Grid */}
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 text-left">
           
           {/* Column 1: Logo & Branding (span 3) */}
           <div className="lg:col-span-3 space-y-4">
@@ -58,43 +64,53 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
           </div>
 
           {/* Column 2: SHOP (span 2) */}
-          <div className="lg:col-span-2">
-            <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest mb-4">
-              Shop
-            </h4>
-            <ul className="space-y-2 text-xs font-semibold text-white/80">
+          <div className="lg:col-span-2 border-b border-white/10 sm:border-0 pb-1 sm:pb-0">
+            <button
+              onClick={() => toggleSection('shop')}
+              className="w-full flex items-center justify-between sm:block text-left focus:outline-none"
+            >
+              <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest sm:mb-4 py-2 sm:py-0 w-full flex items-center justify-between">
+                <span>Shop</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${
+                    openSection === 'shop' ? 'rotate-180' : ''
+                  }`}
+                />
+              </h4>
+            </button>
+            <ul className={`space-y-2 text-xs font-semibold text-white/80 mt-1 sm:mt-0 ${openSection === 'shop' ? 'block pb-4' : 'hidden'} sm:block`}>
               <li>
-                <Link href="/products" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/products" className="block py-1 hover:text-white transition-colors">
                   All Products
                 </Link>
               </li>
               <li>
-                <Link href="/category/nuts" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/category/nuts" className="block py-1 hover:text-white transition-colors">
                   Nuts & Seeds
                 </Link>
               </li>
               <li>
-                <Link href="/category/dry-fruits" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/category/dry-fruits" className="block py-1 hover:text-white transition-colors">
                   Dry Fruits
                 </Link>
               </li>
               <li>
-                <Link href="/category/makhana" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/category/makhana" className="block py-1 hover:text-white transition-colors">
                   Makhana
                 </Link>
               </li>
               <li>
-                <Link href="/category/trail-mixes" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/category/trail-mixes" className="block py-1 hover:text-white transition-colors">
                   Trail Mix
                 </Link>
               </li>
               <li>
-                <Link href="/category/combos" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/category/combos" className="block py-1 hover:text-white transition-colors">
                   Combos
                 </Link>
               </li>
               <li>
-                <Link href="/category/gift-boxes" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/category/gift-boxes" className="block py-1 hover:text-white transition-colors">
                   Gift Packs
                 </Link>
               </li>
@@ -102,28 +118,38 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
           </div>
 
           {/* Column 3: COLLECTIONS (span 2) */}
-          <div className="lg:col-span-2">
-            <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest mb-4">
-              Collections
-            </h4>
-            <ul className="space-y-2 text-xs font-semibold text-white/80">
+          <div className="lg:col-span-2 border-b border-white/10 sm:border-0 pb-1 sm:pb-0">
+            <button
+              onClick={() => toggleSection('collections')}
+              className="w-full flex items-center justify-between sm:block text-left focus:outline-none"
+            >
+              <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest sm:mb-4 py-2 sm:py-0 w-full flex items-center justify-between">
+                <span>Collections</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${
+                    openSection === 'collections' ? 'rotate-180' : ''
+                  }`}
+                />
+              </h4>
+            </button>
+            <ul className={`space-y-2 text-xs font-semibold text-white/80 mt-1 sm:mt-0 ${openSection === 'collections' ? 'block pb-4' : 'hidden'} sm:block`}>
               <li>
-                <Link href="/products?sort=popular" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/products?sort=popular" className="block py-1 hover:text-white transition-colors">
                   Best Sellers
                 </Link>
               </li>
               <li>
-                <Link href="/products?filter=new" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/products?filter=new" className="block py-1 hover:text-white transition-colors">
                   New Arrivals
                 </Link>
               </li>
               <li>
-                <Link href="/products" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/products" className="block py-1 hover:text-white transition-colors">
                   Healthy Picks
                 </Link>
               </li>
               <li>
-                <Link href="/category/nuts" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/category/nuts" className="block py-1 hover:text-white transition-colors">
                   Premium Nuts
                 </Link>
               </li>
@@ -131,33 +157,43 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
           </div>
 
           {/* Column 4: HELP (span 2) */}
-          <div className="lg:col-span-2">
-            <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest mb-4">
-              Help
-            </h4>
-            <ul className="space-y-2 text-xs font-semibold text-white/80">
+          <div className="lg:col-span-2 border-b border-white/10 sm:border-0 pb-1 sm:pb-0">
+            <button
+              onClick={() => toggleSection('help')}
+              className="w-full flex items-center justify-between sm:block text-left focus:outline-none"
+            >
+              <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest sm:mb-4 py-2 sm:py-0 w-full flex items-center justify-between">
+                <span>Help</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${
+                    openSection === 'help' ? 'rotate-180' : ''
+                  }`}
+                />
+              </h4>
+            </button>
+            <ul className={`space-y-2 text-xs font-semibold text-white/80 mt-1 sm:mt-0 ${openSection === 'help' ? 'block pb-4' : 'hidden'} sm:block`}>
               <li>
-                <Link href="/orders" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="/orders" className="block py-1 hover:text-white transition-colors">
                   Track Order
                 </Link>
               </li>
               <li>
-                <Link href={siteSettings?.returns_policy_url || '#'} className="block py-1.5 hover:text-white transition-colors">
+                <Link href={siteSettings?.returns_policy_url || '#'} className="block py-1 hover:text-white transition-colors">
                   Shipping & Delivery
                 </Link>
               </li>
               <li>
-                <Link href={siteSettings?.returns_policy_url || '#'} className="block py-1.5 hover:text-white transition-colors">
+                <Link href={siteSettings?.returns_policy_url || '#'} className="block py-1 hover:text-white transition-colors">
                   Returns & Refunds
                 </Link>
               </li>
               <li>
-                <Link href={siteSettings?.faqs_url || '/faqs'} className="block py-1.5 hover:text-white transition-colors">
+                <Link href={siteSettings?.faqs_url || '/faqs'} className="block py-1 hover:text-white transition-colors">
                   FAQs
                 </Link>
               </li>
               <li>
-                <Link href="#contact" className="block py-1.5 hover:text-white transition-colors">
+                <Link href="#contact" className="block py-1 hover:text-white transition-colors">
                   Contact Us
                 </Link>
               </li>
@@ -165,44 +201,56 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
           </div>
 
           {/* Column 5: GET IN TOUCH & STORE LOCATOR (span 3) */}
-          <div className="lg:col-span-3 space-y-4">
-            <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest mb-4">
-              Get In Touch
-            </h4>
-            <ul className="space-y-3 text-xs font-semibold text-white/80">
-              <li className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-[#D97706] flex-shrink-0" />
-                <a href={`mailto:${siteSettings?.support_email || 'hello@crazilo.com'}`} className="hover:text-white transition-colors py-1">
-                  {siteSettings?.support_email || 'hello@crazilo.com'}
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-[#D97706] flex-shrink-0" />
-                <a href={`tel:${siteSettings?.support_phone || '+919876543210'}`} className="hover:text-white transition-colors py-1">
-                  {siteSettings?.support_phone || '+91 98765 43210'}
-                </a>
-              </li>
-            </ul>
-
-            {/* Store Locator Search Field */}
-            <div className="pt-2">
-              <div className="relative w-full max-w-[280px] sm:max-w-[200px] cursor-pointer" onClick={() => router.push(storeLocatorHref)}>
-                <input
-                  type="text"
-                  placeholder="Store Locator"
-                  readOnly
-                  className="w-full bg-white text-gray-800 text-xs font-bold placeholder:text-gray-500 rounded-lg py-2.5 pl-4 pr-10 focus:outline-none cursor-pointer shadow-inner"
+          <div className="lg:col-span-3 border-b border-white/10 sm:border-0 pb-1 sm:pb-0">
+            <button
+              onClick={() => toggleSection('get-in-touch')}
+              className="w-full flex items-center justify-between sm:block text-left focus:outline-none"
+            >
+              <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest sm:mb-4 py-2 sm:py-0 w-full flex items-center justify-between">
+                <span>Get In Touch</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${
+                    openSection === 'get-in-touch' ? 'rotate-180' : ''
+                  }`}
                 />
-                <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#B91C1C]" />
-              </div>
-            </div>
+              </h4>
+            </button>
+            <div className={`space-y-4 mt-2 sm:mt-0 ${openSection === 'get-in-touch' ? 'block pb-4' : 'hidden'} sm:block`}>
+              <ul className="space-y-3 text-xs font-semibold text-white/80">
+                <li className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-[#D97706] flex-shrink-0" />
+                  <a href={`mailto:${siteSettings?.support_email || 'hello@crazilo.com'}`} className="hover:text-white transition-colors py-1">
+                    {siteSettings?.support_email || 'hello@crazilo.com'}
+                  </a>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-[#D97706] flex-shrink-0" />
+                  <a href={`tel:${siteSettings?.support_phone || '+919876543210'}`} className="hover:text-white transition-colors py-1">
+                    {siteSettings?.support_phone || '+91 98765 43210'}
+                  </a>
+                </li>
+              </ul>
 
-            {/* Payment Icons */}
-            <div className="flex items-center gap-1.5 pt-2">
-              <div className="bg-white px-2 py-1 rounded text-[8px] font-black text-[#1A1F71] border border-white flex items-center justify-center h-6 w-11 shadow-sm select-none">VISA</div>
-              <div className="bg-white px-2 py-1 rounded text-[8px] font-black text-[#F79E1B] border border-white flex items-center justify-center h-6 w-11 shadow-sm select-none">MC</div>
-              <div className="bg-white px-2 py-1 rounded text-[8px] font-black text-[#097939] border border-white flex items-center justify-center h-6 w-11 shadow-sm select-none">UPI</div>
-              <div className="bg-white px-2 py-1 rounded text-[8px] font-black text-[#005B9E] border border-white flex items-center justify-center h-6 w-11 shadow-sm select-none">RUPAY</div>
+              {/* Store Locator Search Field */}
+              <div className="pt-2">
+                <div className="relative w-full max-w-[280px] sm:max-w-[200px] cursor-pointer" onClick={() => router.push(storeLocatorHref)}>
+                  <input
+                    type="text"
+                    placeholder="Store Locator"
+                    readOnly
+                    className="w-full bg-white text-gray-800 text-xs font-bold placeholder:text-gray-500 rounded-lg py-2.5 pl-4 pr-10 focus:outline-none cursor-pointer shadow-inner"
+                  />
+                  <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#B91C1C]" />
+                </div>
+              </div>
+
+              {/* Payment Icons */}
+              <div className="flex items-center gap-1.5 pt-2">
+                <div className="bg-white px-2 py-1 rounded text-[8px] font-black text-[#1A1F71] border border-white flex items-center justify-center h-6 w-11 shadow-sm select-none">VISA</div>
+                <div className="bg-white px-2 py-1 rounded text-[8px] font-black text-[#F79E1B] border border-white flex items-center justify-center h-6 w-11 shadow-sm select-none">MC</div>
+                <div className="bg-white px-2 py-1 rounded text-[8px] font-black text-[#097939] border border-white flex items-center justify-center h-6 w-11 shadow-sm select-none">UPI</div>
+                <div className="bg-white px-2 py-1 rounded text-[8px] font-black text-[#005B9E] border border-white flex items-center justify-center h-6 w-11 shadow-sm select-none">RUPAY</div>
+              </div>
             </div>
           </div>
 
@@ -233,4 +281,3 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
     </footer>
   )
 }
-
