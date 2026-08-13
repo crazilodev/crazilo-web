@@ -224,9 +224,10 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Catalog Table */}
+      {/* Catalog Table */}      {/* Catalog Table */}
       <div className="bg-white rounded-2xl shadow-card overflow-hidden border border-gray-100">
-        <div className="overflow-x-auto">
+        {/* Desktop View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full data-table">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
@@ -407,20 +408,124 @@ export default function AdminProductsPage() {
                           </Link>
                           <button
                             onClick={() => setDeletingProduct(product)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50/50 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-red-650 hover:bg-red-50/50 rounded-lg transition-colors"
                             title="Delete Product"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
-
                     </tr>
                   )
                 })
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Stacked Card View */}
+        <div className="md:hidden divide-y divide-gray-100 p-4 space-y-4">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="skeleton h-32 rounded-2xl" />
+            ))
+          ) : filteredProducts.length === 0 ? (
+            <p className="text-center py-8 text-gray-400 text-sm">
+              No products matching current selection.
+            </p>
+          ) : (
+            filteredProducts.map((product) => {
+              const variantCount = (product as any).variants?.[0]?.count || 0
+              const isLowStock = product.track_inventory && product.stock_quantity <= product.low_stock_threshold && product.stock_quantity > 0
+              const isOutOfStock = product.track_inventory && product.stock_quantity === 0
+
+              return (
+                <div key={product.id} className="bg-gray-50/50 rounded-2xl border border-gray-100 p-4 flex flex-col gap-3 text-xs">
+                  {/* Top Header */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden relative bg-white border border-gray-100 flex-shrink-0">
+                      {product.thumbnail_url ? (
+                        <Image src={product.thumbnail_url} alt={product.name} fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-[10px]">
+                          No Img
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{product.name}</p>
+                      <p className="text-[10px] text-gray-400 font-mono mt-0.5">{product.sku || 'No SKU'}</p>
+                    </div>
+                  </div>
+
+                  {/* Middle Specs grid */}
+                  <div className="grid grid-cols-2 gap-2.5 border-t border-b border-gray-100 py-3 my-1 text-gray-600">
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">Category</p>
+                      <p className="font-semibold text-gray-800 mt-0.5">{(product.category as any)?.name || 'Uncategorized'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">Price</p>
+                      <p className="font-semibold text-brand-red mt-0.5">{formatPrice(product.price)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 tracking-wider uppercase font-semibold">Inventory</p>
+                      <div className="mt-0.5">
+                        {variantCount > 0 ? (
+                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                            {variantCount} Var
+                          </span>
+                        ) : (
+                          <span className={`font-semibold ${isOutOfStock ? 'text-red-500 font-bold' : isLowStock ? 'text-amber-600 font-bold' : 'text-gray-700'}`}>
+                            {product.track_inventory ? `${product.stock_quantity} left` : '∞ unlimited'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 tracking-wider uppercase font-semibold">Status</p>
+                      <button
+                        onClick={() => toggleActive(product)}
+                        className="mt-0.5 text-left focus:outline-none"
+                      >
+                        <StatusBadge status={product.is_active ? 'Active' : 'Inactive'} type="generic" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Badges/Flags */}
+                  <div className="flex flex-wrap gap-1">
+                    {product.is_featured && <span className="text-[8px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50 px-1.5 py-0.5 rounded uppercase">Featured</span>}
+                    {product.is_bestseller && <span className="text-[8px] font-bold bg-purple-50 text-purple-700 border border-purple-200/50 px-1.5 py-0.5 rounded uppercase">Bestseller</span>}
+                    {product.is_new && <span className="text-[8px] font-bold bg-blue-50 text-blue-700 border border-blue-200/50 px-1.5 py-0.5 rounded uppercase">New</span>}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex justify-end items-center gap-2 pt-2.5 border-t border-gray-100">
+                    <Link
+                      href={`/products/${product.slug}`}
+                      target="_blank"
+                      className="px-2.5 py-1.5 text-[10px] font-bold text-blue-600 hover:bg-blue-50 border border-blue-150 rounded-lg flex items-center gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Store
+                    </Link>
+                    <Link
+                      href={`/admin/products/${product.id}/edit`}
+                      className="px-2.5 py-1.5 text-[10px] font-bold text-gray-600 hover:bg-gray-100 border border-gray-200 rounded-lg flex items-center gap-1"
+                    >
+                      <Edit className="w-3.5 h-3.5" /> Edit
+                    </Link>
+                    <button
+                      onClick={() => setDeletingProduct(product)}
+                      className="px-2.5 py-1.5 text-[10px] font-bold text-red-650 hover:bg-red-50 border border-red-200 rounded-lg flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                    </button>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
 

@@ -43,30 +43,35 @@ export default function CartPage() {
               </div>
 
               {items.map((item) => (
-                <div key={item.id} className="bg-white rounded-2xl p-4 sm:p-5 flex items-center gap-4 shadow-card">
-                  <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-50">
-                    {item.product.thumbnail_url ? (
-                      <Image src={item.product.thumbnail_url} alt={item.product.name} width={80} height={80} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-red-50 to-amber-50" />
-                    )}
+                <div key={item.id} className="bg-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-card">
+                  <div className="flex items-center gap-4 w-full sm:w-auto flex-1">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-50">
+                      {item.product.thumbnail_url ? (
+                        <Image src={item.product.thumbnail_url} alt={item.product.name} width={80} height={80} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-red-50 to-amber-50" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/products/${item.product.slug}`} className="font-semibold text-sm sm:text-base text-gray-900 hover:text-brand-red transition-colors line-clamp-1">
+                        {item.product.name}
+                      </Link>
+                      {item.variant && <p className="text-xs text-gray-500">{item.variant.name}</p>}
+                      <p className="font-bold text-brand-red mt-1 text-sm sm:text-base">{formatPrice(item.price)}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <Link href={`/products/${item.product.slug}`} className="font-semibold text-gray-900 hover:text-brand-red transition-colors line-clamp-1">
-                      {item.product.name}
-                    </Link>
-                    {item.variant && <p className="text-xs text-gray-500">{item.variant.name}</p>}
-                    <p className="font-bold text-brand-red mt-1">{formatPrice(item.price)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:border-brand-red hover:text-brand-red transition-colors">
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="w-8 text-center font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:border-brand-red hover:text-brand-red transition-colors">
-                      <Plus className="w-3 h-3" />
-                    </button>
-                    <button onClick={() => removeItem(item.id)} className="ml-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+
+                  <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-50">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:border-brand-red hover:text-brand-red transition-colors">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:border-brand-red hover:text-brand-red transition-colors">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <button onClick={() => removeItem(item.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShoppingCart, Heart, Star, ChevronRight, Leaf, Flame,
   Shield, Truck, Package, Minus, Plus, Share2
@@ -32,7 +32,27 @@ export default function ProductDetailClient({ product, relatedProducts, reviews 
   const [activeTab, setActiveTab] = useState<'description' | 'nutrition' | 'reviews'>('description')
   const { addToCart } = useCart()
   const { hasItem, toggle } = useWishlist()
-  const isWishlisted = hasItem(product.id)
+  
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isWishlisted = mounted ? hasItem(product.id) : false
+  const [showStickyBar, setShowStickyBar] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const ctaBtn = document.getElementById('product-add-to-cart-btn')
+      if (ctaBtn) {
+        const rect = ctaBtn.getBoundingClientRect()
+        // Show sticky bar when the main Add to Cart is scrolled out of view
+        setShowStickyBar(rect.bottom < 0)
+      }
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const images = [
     ...(product.thumbnail_url ? [product.thumbnail_url] : []),
@@ -226,53 +246,62 @@ export default function ProductDetailClient({ product, relatedProducts, reviews 
               </span>
             </div>
 
-            {/* Quantity + Add to Cart */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+            {/* Quantity + Add to Cart + Wishlist + Share buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex items-center gap-3 flex-1">
+                {/* Quantity */}
+                <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden flex-shrink-0">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="w-10 sm:w-12 text-center font-bold text-gray-900 text-base sm:text-lg">{quantity}</span>
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Add to Cart button */}
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={!inStock}
+                  variant="primary"
+                  size="lg"
+                  className="flex-1 h-10 sm:h-11 text-xs sm:text-sm font-bold"
+                  id="product-add-to-cart-btn"
                 >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-12 text-center font-bold text-gray-900 text-lg">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+                  <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                  {inStock ? 'Add to Cart' : 'Out of Stock'}
+                </Button>
               </div>
 
-              <Button
-                onClick={handleAddToCart}
-                disabled={!inStock}
-                variant="primary"
-                size="lg"
-                className="flex-1"
-                id="product-add-to-cart-btn"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {inStock ? 'Add to Cart' : 'Out of Stock'}
-              </Button>
+              {/* Wishlist & Share buttons */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => toggle(product.id, product.name)}
+                  className={`flex-1 sm:flex-initial w-full sm:w-11 sm:h-11 h-10 rounded-xl border-2 flex items-center justify-center gap-2 sm:gap-0 transition-all ${
+                    isWishlisted ? 'border-brand-red bg-red-50 text-brand-red' : 'border-gray-200 text-gray-400 hover:border-brand-red hover:text-brand-red'
+                  }`}
+                  aria-label="Add to wishlist"
+                >
+                  <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isWishlisted ? 'fill-brand-red' : ''}`} />
+                  <span className="sm:hidden text-xs font-bold">Wishlist</span>
+                </button>
 
-              <button
-                onClick={() => toggle(product.id, product.name)}
-                className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${
-                  isWishlisted ? 'border-brand-red bg-red-50 text-brand-red' : 'border-gray-200 text-gray-400 hover:border-brand-red hover:text-brand-red'
-                }`}
-                aria-label="Add to wishlist"
-              >
-                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-brand-red' : ''}`} />
-              </button>
-
-              <button
-                onClick={handleShare}
-                className="w-12 h-12 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-400 hover:border-gray-300 hover:text-gray-600 transition-all"
-                aria-label="Share product"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
+                <button
+                  onClick={handleShare}
+                  className="flex-1 sm:flex-initial w-full sm:w-11 sm:h-11 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center gap-2 sm:gap-0 text-gray-400 hover:border-brand-red hover:text-brand-red transition-all"
+                  aria-label="Share product"
+                >
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="sm:hidden text-xs font-bold">Share</span>
+                </button>
+              </div>
             </div>
 
             {/* Trust indicators */}
@@ -392,6 +421,46 @@ export default function ProductDetailClient({ product, relatedProducts, reviews 
           </div>
         )}
       </div>
+
+      {/* Mobile Sticky Bottom Purchase Bar */}
+      <AnimatePresence>
+        {showStickyBar && (
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-150 p-3 flex items-center gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
+          >
+            {/* Thumbnail and Title */}
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0">
+                {images[0] ? (
+                  <Image src={images[0]} alt={product.name} fill className="object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gray-100" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-gray-900 truncate leading-snug">{product.name}</p>
+                <p className="text-[10px] text-brand-red font-black leading-none mt-0.5">{formatPrice(currentPrice)}</p>
+              </div>
+            </div>
+
+            {/* CTA Buy Action Button */}
+            <Button
+              onClick={handleAddToCart}
+              disabled={!inStock}
+              variant="primary"
+              size="md"
+              className="px-4 py-2 text-xs font-black tracking-wider uppercase h-10 flex items-center justify-center gap-1"
+            >
+              <ShoppingCart className="w-3.5 h-3.5" />
+              <span>{inStock ? 'Add' : 'Out'}</span>
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
