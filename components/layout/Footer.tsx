@@ -40,11 +40,11 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
           {/* Column 1: Logo & Branding (span 3) */}
           <div className="lg:col-span-3 space-y-4">
             <Image
-              src="/logo/crazilo-logo.png"
+              src="/logo/logo-white bg.png"
               alt="Crazilo"
               width={160}
               height={56}
-              className="h-12 w-auto object-contain bg-white/90 p-2 rounded-xl"
+              className="h-12 w-auto object-contain rounded-xl"
             />
             <p className="text-xs text-white/80 leading-relaxed max-w-xs">
               Wholesome snacks made with love, inspired by nature.
