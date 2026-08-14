@@ -122,7 +122,7 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                   <div className="col-span-7 sm:col-span-6 flex flex-col justify-center space-y-1.5 sm:space-y-5 text-left pl-1 sm:pl-4 lg:pl-6">
                     {activeBanner.badge_text && (
                       <span
-                        className="inline-block text-[7px] sm:text-[10px] font-black tracking-widest uppercase px-2 py-0.5 sm:px-3 sm:py-1 rounded-full w-max transition-colors"
+                        className="inline-block text-[9px] sm:text-[10px] font-black tracking-widest uppercase px-2 py-0.5 sm:px-3 sm:py-1 rounded-full w-max transition-colors"
                         style={{
                           color: textColor,
                           backgroundColor: textColor ? `${textColor}1A` : 'rgba(185, 28, 28, 0.05)'
@@ -133,24 +133,24 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                     )}
 
                     <h2
-                      className="font-heading text-xs sm:text-4xl lg:text-6xl font-black leading-[1.1] sm:leading-[1.08] tracking-tight uppercase"
+                      className="font-heading text-sm sm:text-4xl lg:text-6xl font-black leading-[1.1] sm:leading-[1.08] tracking-tight uppercase"
                       style={{ color: textColor }}
                     >
                       {activeBanner.title}
                     </h2>
 
                     <p
-                      className="text-[7px] sm:text-sm lg:text-base max-w-md leading-relaxed font-semibold sm:font-medium line-clamp-2 sm:line-clamp-none"
+                      className="text-[9px] sm:text-sm lg:text-base max-w-md leading-relaxed font-semibold sm:font-medium line-clamp-2 sm:line-clamp-none"
                       style={{ color: textColor ? `${textColor}D9` : '#5C4D4A' }}
                     >
                       {activeBanner.subtitle}
                     </p>
 
                     {/* Action CTA */}
-                    <div className="pt-1 sm:pt-4">
+                    <div className="pt-1.5 sm:pt-4">
                       <Link
                         href={activeBanner.cta_link}
-                        className="inline-flex items-center gap-1.5 sm:gap-2 font-extrabold text-[7px] sm:text-xs tracking-wider uppercase px-3 py-1.5 sm:px-8 sm:py-4 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:brightness-110 active:brightness-95"
+                        className="inline-flex items-center gap-1.5 sm:gap-2 font-extrabold text-[9px] sm:text-xs tracking-wider uppercase px-4 py-2 sm:px-8 sm:py-4 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:brightness-110 active:brightness-95"
                         style={{
                           backgroundColor: btnBgColor,
                           color: btnTextColor
@@ -163,28 +163,47 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                   </div>
 
                   {/* Right Column (Product Image) */}
-                  <div className="col-span-5 sm:col-span-6 flex items-center justify-center min-h-[80px] sm:min-h-[220px] lg:min-h-[350px] pr-1 sm:pr-4 lg:pr-6">
-                    <div className="relative w-full max-w-[80px] sm:max-w-[220px] lg:max-w-[380px] aspect-square flex items-center justify-center">
+                  <div className="col-span-5 sm:col-span-6 flex items-center justify-center h-full pr-1 sm:pr-4 lg:pr-6 py-2 sm:py-6">
+                    <div className="relative w-full h-full flex items-center justify-center">
                       <div
-                        className="absolute inset-0 rounded-full blur-xl sm:blur-2xl z-0 transition-colors duration-500"
+                        className="absolute inset-0 rounded-full blur-xl sm:blur-3xl z-0 transition-colors duration-500 scale-90"
                         style={{
                           backgroundColor: textColor ? `${textColor}1A` : 'rgba(239, 231, 221, 0.3)'
                         }}
                       />
-                      <div className="relative z-10 w-full h-full transform hover:scale-102 transition-transform duration-500">
+                      <div className="relative z-10 w-full h-full max-h-[120px] sm:max-h-[320px] lg:max-h-[460px] transform hover:scale-102 transition-transform duration-500">
                         <Image
                           src={activeBanner.image_url}
                           alt={activeBanner.title}
                           fill
                           className="object-contain drop-shadow-2xl"
                           priority
+                          sizes="(max-width: 640px) 100vw, 50vw"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <Link href={activeBanner.cta_link} className="absolute inset-0 w-full h-full cursor-pointer z-10" />
+                <>
+                  <Link href={activeBanner.cta_link} className="absolute inset-0 w-full h-full cursor-pointer z-10" />
+                  {/* Shop Now overlay button for mobile viewport when mobile background image is showing */}
+                  {hasMobileImage && (
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 sm:hidden">
+                      <Link
+                        href={activeBanner.cta_link}
+                        className="inline-flex items-center gap-1.5 font-extrabold text-[10px] tracking-wider uppercase px-5 py-2.5 rounded-full shadow-lg transition-all duration-300 hover:brightness-110 active:scale-95"
+                        style={{
+                          backgroundColor: btnBgColor,
+                          color: btnTextColor
+                        }}
+                      >
+                        <span>{activeBanner.cta_text || 'SHOP NOW'}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
