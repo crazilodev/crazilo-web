@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Phone } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useWishlistStore } from '@/lib/store/wishlistStore'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import toast from 'react-hot-toast'
@@ -19,8 +20,19 @@ interface RegisterForm {
   confirm_password: string
 }
 
-export default function RegisterPage() {
+function RegisterClient() {
+  function isInternalUrl(url: string | null): boolean {
+    if (!url) return false
+    if (url.includes('://') || url.startsWith('//') || url.startsWith('\\\\') || url.toLowerCase().startsWith('javascript:')) {
+      return false
+    }
+    return url.startsWith('/')
+  }
+
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const rawRedirect = searchParams.get('redirect')
+  const cleanRedirect = isInternalUrl(rawRedirect) ? rawRedirect! : '/'
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>()
@@ -37,11 +49,18 @@ export default function RegisterPage() {
       })
       if (error) throw error
       toast.success('Account created! Welcome to Crazilo 🎉')
-      router.push('/')
+
+      // Handle post-signup wishlist action
+      const action = searchParams.get('action')
+      const wishlistItem = searchParams.get('wishlist_item')
+      if (action === 'favorite' && wishlistItem) {
+        useWishlistStore.getState().addItem(wishlistItem)
+      }
+
+      router.push(cleanRedirect)
       router.refresh()
     } catch (err: any) {
       toast.error(err.message || 'Registration failed')
-    } finally {
       setLoading(false)
     }
   }
@@ -80,11 +99,19 @@ export default function RegisterPage() {
 
             <p className="mt-6 text-center text-sm text-gray-500">
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-brand-red font-semibold hover:underline">Sign in</Link>
+              <Link href={`/auth/login${searchParams.toString() ? `?${searchParams.toString()}` : ''}`} className="text-brand-red font-semibold hover:underline">Sign in</Link>
             </p>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterClient />
+    </Suspense>
   )
 }
