@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronRight, Heart, Star, ShoppingCart, ArrowRight } from 'lucide-react'
 import { useCartStore } from '@/lib/store/cartStore'
-import { useWishlistStore } from '@/lib/store/wishlistStore'
+import { useWishlist } from '@/lib/hooks/useWishlist'
 import type { Category, Product } from '@/types'
 import toast from 'react-hot-toast'
 
@@ -24,7 +24,7 @@ export default function CashewStoreSection({
 }: CashewStoreSectionProps) {
   const [selectedWeights, setSelectedWeights] = useState<Record<string, string>>({})
   const { addItem } = useCartStore()
-  const { toggleItem, hasItem } = useWishlistStore()
+  const { toggle, hasItem } = useWishlist()
   
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
@@ -151,8 +151,7 @@ export default function CashewStoreSection({
 
                       <button
                         onClick={() => {
-                          toggleItem(product.id)
-                          toast.success('Wishlist updated!')
+                          toggle(product.id, product.name)
                         }}
                         className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/80 border border-[#EFE7DD] flex items-center justify-center text-gray-400 hover:text-[#A61919] transition-colors shadow-sm"
                         aria-label="Add to Wishlist"

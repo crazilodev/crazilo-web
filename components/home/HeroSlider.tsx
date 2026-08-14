@@ -72,6 +72,8 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
     }),
   }
 
+  const hasMobileImage = mounted && isMobile && !!activeBanner?.mobile_image_url
+
   return (
     <section
       className="relative w-full overflow-hidden select-none border-b border-gray-100 bg-white sm:bg-transparent px-3 pt-2 sm:px-0 sm:pt-0 transition-colors duration-500"
@@ -79,10 +81,10 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
     >
       {/* 
         Hero Container:
-        - Mobile: aspect-[16/9.5] rounded card layout
+        - Mobile: aspect-[4/5] if mobile image is present (large & legible), else aspect-[16/9.5] rounded card layout
         - Desktop: full-bleed original aspect ratio boundaries
       */}
-      <div className="relative w-full aspect-[16/9.5] sm:aspect-[16/10] md:aspect-[16/9] lg:aspect-[16/6] max-w-[1440px] mx-auto overflow-hidden rounded-2xl sm:rounded-none border border-gray-100/50 sm:border-0 shadow-sm sm:shadow-none">
+      <div className={`relative w-full ${hasMobileImage ? 'aspect-[4/5]' : 'aspect-[16/9.5]'} sm:aspect-[16/10] md:aspect-[16/9] lg:aspect-[16/6] max-w-[1440px] mx-auto overflow-hidden rounded-2xl sm:rounded-none border border-gray-100/50 sm:border-0 shadow-sm sm:shadow-none`}>
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
             key={activeIndex}
@@ -99,9 +101,9 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
           >
             {/* Background Layer */}
             <div className="absolute inset-0 w-full h-full z-0">
-              {activeBanner.is_full_width ? (
+              {activeBanner.is_full_width || hasMobileImage ? (
                 <Image
-                  src={mounted && isMobile && activeBanner.mobile_image_url ? activeBanner.mobile_image_url : activeBanner.image_url}
+                  src={hasMobileImage ? activeBanner.mobile_image_url! : activeBanner.image_url}
                   alt={activeBanner.title}
                   fill
                   className="object-cover object-center"
@@ -114,7 +116,7 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
 
             {/* Content Layer */}
             <div className="relative z-10 w-full h-full flex items-center px-4 sm:px-6 lg:px-8">
-              {!activeBanner.is_full_width ? (
+              {!activeBanner.is_full_width && !hasMobileImage ? (
                 <div className="w-full grid grid-cols-12 gap-2 sm:gap-6 lg:gap-8 items-center h-full pt-3 pb-8 sm:pt-8 sm:pb-24 lg:pt-8 lg:pb-28">
                   {/* Left Column (Content) */}
                   <div className="col-span-7 sm:col-span-6 flex flex-col justify-center space-y-1.5 sm:space-y-5 text-left pl-1 sm:pl-4 lg:pl-6">
