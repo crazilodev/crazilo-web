@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Profile } from '@/types'
 import { User, Mail, Phone, Save, Shield } from 'lucide-react'
@@ -66,9 +67,18 @@ export default function AccountPage() {
             <Input label="Full Name" {...register('full_name')} icon={<User className="w-4 h-4" />} id="account-name" />
             <Input label="Email (cannot change)" value={profile?.email || ''} disabled icon={<Mail className="w-4 h-4" />} id="account-email" />
             <Input label="Phone Number" {...register('phone')} icon={<Phone className="w-4 h-4" />} id="account-phone" />
-            <Button type="submit" variant="primary" loading={loading} id="save-profile-btn">
-              <Save className="w-4 h-4" /> Save Changes
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="submit" variant="primary" loading={loading} id="save-profile-btn">
+                <Save className="w-4 h-4" /> Save Changes
+              </Button>
+              {profile?.role === 'admin' && (
+                <Link href="/admin">
+                  <Button type="button" variant="outline" id="go-to-admin-btn">
+                    <Shield className="w-4 h-4" /> Go to Admin Dashboard
+                  </Button>
+                </Link>
+              )}
+            </div>
           </form>
         </div>
       </div>

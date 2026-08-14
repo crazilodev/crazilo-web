@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, ShoppingCart, User, Heart, ChevronDown,
   LogOut, Package, Settings, Menu, X, Compass, MapPin,
-  ChevronRight, ArrowRight
+  ChevronRight, ArrowRight, Shield
 } from 'lucide-react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -305,6 +305,16 @@ export default function Navbar() {
                     
                     {showUserMenu && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                        {profile?.role === 'admin' && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setShowUserMenu(false)}
+                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-[#B91C1C] hover:bg-[#FFF8F0]"
+                          >
+                            <Shield className="w-4 h-4" />
+                            <span>Admin Dashboard</span>
+                          </Link>
+                        )}
                         <Link
                           href="/account"
                           onClick={() => setShowUserMenu(false)}

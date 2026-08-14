@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { syncAdminRole } from '@/app/admin/actions'
+import { useWishlistStore } from '@/lib/store/wishlistStore'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import toast from 'react-hot-toast'
@@ -66,6 +67,13 @@ export default function LoginClient() {
 
       toast.success('Welcome back! 👋')
 
+      // Handle post-login wishlist action
+      const action = searchParams.get('action')
+      const wishlistItem = searchParams.get('wishlist_item')
+      if (action === 'favorite' && wishlistItem) {
+        useWishlistStore.getState().addItem(wishlistItem)
+      }
+
       if (profile.role === 'admin') {
         const dest = cleanRedirect.startsWith('/admin') ? cleanRedirect : '/admin'
         window.location.href = dest
@@ -84,11 +92,11 @@ export default function LoginClient() {
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="bg-gradient-to-br from-brand-red to-brand-red-dark p-8 text-center">
             <Image
-              src="/logo/crazilo-logo.png"
+              src="/logo/logo-white bg.png"
               alt="Crazilo"
               width={140}
               height={48}
-              className="h-12 w-auto object-contain mx-auto mb-3 brightness-0 invert"
+              className="h-12 w-auto object-contain mx-auto mb-3"
             />
             <p className="text-white/80 text-sm">Welcome back! Sign in to continue.</p>
           </div>
@@ -134,7 +142,10 @@ export default function LoginClient() {
             <div className="mt-6 text-center space-y-3">
               <p className="text-sm text-gray-500">
                 Don&apos;t have an account?{' '}
-                <Link href="/auth/register" className="text-brand-red font-semibold hover:underline">
+                <Link
+                  href={`/auth/register${searchParams.toString() ? `?${searchParams.toString()}` : ''}`}
+                  className="text-brand-red font-semibold hover:underline"
+                >
                   Create one
                 </Link>
               </p>
