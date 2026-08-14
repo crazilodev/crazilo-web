@@ -192,6 +192,7 @@ export default function AdminBannersPage() {
       const payload: any = {
         ...formData,
         id: editing?.id,
+        is_full_width: false,
         bg_color: `${formData.bg_color};${formData.btn_bg_color}`,
         text_color: `${formData.text_color};${formData.btn_text_color}`,
         image_url: images[0],
@@ -551,15 +552,11 @@ export default function AdminBannersPage() {
                 <input id="is_active" type="checkbox" {...register('is_active')} className="w-4 h-4 rounded accent-brand-red" />
                 <span className="text-sm font-semibold text-gray-700">Active</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input id="is_full_width" type="checkbox" {...register('is_full_width')} className="w-4 h-4 rounded accent-brand-red" />
-                <span className="text-sm font-semibold text-gray-700">Full Width Layout (No Text)</span>
-              </label>
             </div>
 
             <div className="sm:col-span-2 bg-amber-50/50 border border-amber-200/50 rounded-xl p-3 text-xs text-amber-800 space-y-1">
               <p className="font-bold">💡 Banner Composition Guide</p>
-              <p>For best results, upload images matching the recommended aspect ratios: <strong>1920x720 px (16:6)</strong> for desktop, and <strong>800x1000 px (4:5)</strong> for mobile. Full-width banners should have text/graphics baked into the image, while regular layouts overlay title text dynamically.</p>
+              <p>For best results, upload images matching the recommended aspect ratios: <strong>1920x720 px (16:6)</strong> for desktop, and <strong>800x1000 px (4:5)</strong> for mobile. The layout automatically overlays text and renders the product image on desktop, while displaying the mobile image full-bleed on mobile viewports.</p>
             </div>
 
             <div className="sm:col-span-2">

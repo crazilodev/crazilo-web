@@ -39,6 +39,17 @@ body {
 ::-webkit-scrollbar-thumb { background: #B91C1C; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #7F1D1D; }
 
+/* Scrollbar Utility to Hide Scrollbars */
+.scrollbar-none::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-none,
+.hide-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
 /* Selection */
 ::selection { background: #B91C1C; color: white; }
 
