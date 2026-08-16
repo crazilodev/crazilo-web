@@ -97,6 +97,17 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
               x: { type: 'spring', stiffness: 220, damping: 28 },
               opacity: { duration: 0.3 },
             }}
+            drag={isMobile ? 'x' : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, info) => {
+              const swipeThreshold = 50
+              if (info.offset.x < -swipeThreshold) {
+                handleNext()
+              } else if (info.offset.x > swipeThreshold) {
+                handlePrev()
+              }
+            }}
             className="w-full h-full absolute inset-0 flex items-center"
           >
             {/* Background Layer */}
