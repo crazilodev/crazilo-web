@@ -191,10 +191,11 @@ export default function Navbar() {
   ]
 
   return (
-    <header className={`sticky top-0 border-b border-gray-100/80 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-200 ${
-      showMobileMenu || showSearch ? 'z-[99]' : 'z-50'
-    }`}>
-      <nav className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
+    <>
+      <header className={`sticky top-0 border-b border-gray-100/80 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-200 ${
+        showMobileMenu || showSearch ? 'z-[99]' : 'z-50'
+      }`}>
+        <nav className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
           
           {/* Crazilo Brand Logo */}
@@ -364,6 +365,7 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
+    </header>
 
       {/* ── Spotlight Search Modal Overlay (Centered, with blurred backdrop) ── */}
       <AnimatePresence>
@@ -675,7 +677,7 @@ export default function Navbar() {
           </>
         )}
       </AnimatePresence>
-    </header>
+    </>
   )
 }
 
