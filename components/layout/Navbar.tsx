@@ -192,7 +192,7 @@ export default function Navbar() {
 
   return (
     <header className={`sticky top-0 border-b border-gray-100/80 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-200 ${
-      showMobileMenu || showSearch ? 'z-[90]' : 'z-50'
+      showMobileMenu || showSearch ? 'z-[99]' : 'z-50'
     }`}>
       <nav className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
@@ -376,7 +376,7 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md"
+              className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-md"
               onClick={() => {
                 setShowSearch(false)
                 setSearchTerm('')
@@ -391,7 +391,7 @@ export default function Navbar() {
               animate={{ opacity: 1, scale: 1, y: 0, x: '-50%' }}
               exit={{ opacity: 0, scale: 0.95, y: -20, x: '-50%' }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed top-16 sm:top-24 left-1/2 z-[70] w-full max-w-[calc(100%-2rem)] sm:max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-150 overflow-hidden"
+              className="fixed top-16 sm:top-24 left-1/2 z-[95] w-full max-w-[calc(100%-2rem)] sm:max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-150 overflow-hidden"
             >
               <form onSubmit={handleSpotlightSearch}>
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
@@ -586,7 +586,7 @@ export default function Navbar() {
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowMobileMenu(false)}
-              className="fixed inset-0 z-40 bg-black"
+              className="fixed inset-0 z-[90] bg-black"
             />
             {/* Drawer */}
             <motion.div
@@ -594,7 +594,7 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 z-50 w-full max-w-[280px] bg-white shadow-2xl flex flex-col p-6 overflow-y-auto"
+              className="fixed inset-y-0 left-0 z-[95] w-full max-w-[280px] bg-white shadow-2xl flex flex-col p-6 overflow-y-auto"
             >
               <div className="flex items-center justify-end mb-8">
                 <button
