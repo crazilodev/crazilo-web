@@ -191,19 +191,12 @@ export default function Navbar() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-100/80 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-200">
+    <header className={`sticky top-0 border-b border-gray-100/80 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-200 ${
+      showMobileMenu || showSearch ? 'z-[90]' : 'z-50'
+    }`}>
       <nav className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
           
-          {/* Mobile menu toggle */}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="lg:hidden p-1.5 text-gray-700 hover:text-[#B91C1C] transition-colors"
-            aria-label="Toggle mobile menu"
-          >
-            {showMobileMenu ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
-          </button>
-
           {/* Crazilo Brand Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center">
             <Image
@@ -357,6 +350,15 @@ export default function Navbar() {
                     {totalCartItems}
                   </span>
                 )}
+              </button>
+
+              {/* Mobile menu toggle */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="lg:hidden p-1.5 text-gray-700 hover:text-[#B91C1C] transition-colors"
+                aria-label="Toggle mobile menu"
+              >
+                {showMobileMenu ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
               </button>
             </div>
           </div>
@@ -594,17 +596,11 @@ export default function Navbar() {
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed inset-y-0 left-0 z-50 w-full max-w-[280px] bg-white shadow-2xl flex flex-col p-6 overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-8">
-                <Image
-                  src="/logo/crazilo-logo.png"
-                  alt="Crazilo"
-                  width={120}
-                  height={42}
-                  className="h-8 w-auto object-contain"
-                />
+              <div className="flex items-center justify-end mb-8">
                 <button
                   onClick={() => setShowMobileMenu(false)}
                   className="p-2 text-gray-500 hover:text-[#B91C1C]"
+                  aria-label="Close mobile menu"
                 >
                   <X className="w-6 h-6" />
                 </button>
