@@ -48,7 +48,7 @@ function RegisterClient() {
         options: { data: { full_name, phone } },
       })
       if (error) throw error
-      toast.success('Account created! Welcome to Crazilo 🎉')
+      toast.success('Account created! Welcome to Crazilo')
 
       // Handle post-signup wishlist action
       const action = searchParams.get('action')
@@ -70,7 +70,7 @@ function RegisterClient() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="bg-gradient-to-br from-brand-red to-brand-red-dark p-8 text-center">
-            <Image src="/logo/crazilo-logo.png" alt="Crazilo" width={140} height={48} className="h-12 w-auto object-contain mx-auto mb-3 brightness-0 invert" />
+            <Image src="/logo/logo-white bg.png" alt="Crazilo" width={140} height={48} className="h-12 w-auto object-contain mx-auto mb-3" />
             <p className="text-white/80 text-sm">Create your Crazilo account</p>
           </div>
 
