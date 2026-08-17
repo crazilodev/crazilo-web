@@ -285,7 +285,11 @@ export default function Navbar() {
               </button>
 
               {/* Account Icon / Dropdown */}
-              <div className="relative">
+              <div 
+                className="relative"
+                onMouseEnter={() => user && setShowUserMenu(true)}
+                onMouseLeave={() => user && setShowUserMenu(false)}
+              >
                 {user ? (
                   <div className="relative">
                     <button
@@ -378,7 +382,7 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-md"
+              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md"
               onClick={() => {
                 setShowSearch(false)
                 setSearchTerm('')
@@ -393,7 +397,7 @@ export default function Navbar() {
               animate={{ opacity: 1, scale: 1, y: 0, x: '-50%' }}
               exit={{ opacity: 0, scale: 0.95, y: -20, x: '-50%' }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed top-16 sm:top-24 left-1/2 z-[95] w-full max-w-[calc(100%-2rem)] sm:max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-150 overflow-hidden"
+              className="fixed top-16 sm:top-24 left-1/2 z-[101] w-full max-w-[calc(100%-2rem)] sm:max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-150 overflow-hidden"
             >
               <form onSubmit={handleSpotlightSearch}>
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
@@ -664,6 +668,38 @@ export default function Navbar() {
 
               {/* Mobile Quick links footer */}
               <div className="mt-auto pt-8 border-t border-gray-100 flex flex-col gap-4 text-xs font-semibold text-gray-500">
+                {user ? (
+                  <>
+                    <Link href="/account" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 hover:text-[#B91C1C]">
+                      <User className="w-4 h-4" />
+                      <span>My Account</span>
+                    </Link>
+                    {profile?.role === 'admin' && (
+                      <Link href="/admin" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 text-[#B91C1C] font-bold">
+                        <Shield className="w-4 h-4" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        setShowMobileMenu(false)
+                        handleSignOut()
+                      }}
+                      className="flex items-center gap-2 hover:text-[#B91C1C] text-left w-full font-semibold"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </>
+                ) : (
+                  <Link href="/auth/login" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 hover:text-[#B91C1C]">
+                    <User className="w-4 h-4" />
+                    <span>Sign In</span>
+                  </Link>
+                )}
+
+                <div className="border-t border-gray-100 my-1"></div>
+
                 <Link href="/orders" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 hover:text-[#B91C1C]">
                   <Compass className="w-4 h-4" />
                   <span>Track Order</span>
