@@ -588,7 +588,7 @@ export default function Navbar() {
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowMobileMenu(false)}
-              className="fixed inset-0 z-[90] bg-black"
+              className="fixed inset-0 z-[100] bg-black"
             />
             {/* Drawer */}
             <motion.div
@@ -596,7 +596,7 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 z-[95] w-full max-w-[280px] bg-white shadow-2xl flex flex-col p-6 overflow-y-auto"
+              className="fixed inset-y-0 left-0 z-[101] w-full max-w-[280px] bg-white shadow-2xl flex flex-col p-6 overflow-y-auto"
             >
               <div className="flex items-center justify-end mb-8">
                 <button
