@@ -28,6 +28,7 @@ export default function Navbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   const searchRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -35,14 +36,17 @@ export default function Navbar() {
         setShowSearch(false)
         setSearchTerm('')
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
     }
-    if (showSearch) {
+    if (showSearch || showUserMenu) {
       document.addEventListener('mousedown', handleClickOutside)
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showSearch])
+  }, [showSearch, showUserMenu])
   
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
@@ -223,16 +227,18 @@ export default function Navbar() {
                   <span>Shop</span>
                   <ChevronDown className="w-4 h-4 text-gray-500 group-hover:rotate-180 transition-transform" />
                 </Link>
-                <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 py-3 z-50">
-                  {mainCategories.map((cat) => (
-                    <Link
-                      key={cat.id}
-                      href={`/category/${cat.slug}`}
-                      className="block px-5 py-2.5 text-xs font-semibold text-gray-700 hover:text-[#B91C1C] hover:bg-[#FFF8F0]"
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
+                <div className="absolute top-full left-0 pt-1.5 w-56 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 z-50">
+                  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 py-3">
+                    {mainCategories.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        href={`/category/${cat.slug}`}
+                        className="block px-5 py-2.5 text-xs font-semibold text-gray-700 hover:text-[#B91C1C] hover:bg-[#FFF8F0]"
+                      >
+                        {cat.name}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -245,16 +251,18 @@ export default function Navbar() {
                   <span>Collections</span>
                   <ChevronDown className="w-4 h-4 text-gray-500 group-hover:rotate-180 transition-transform" />
                 </Link>
-                <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 py-3 z-50">
-                  {collectionsNav.map((col) => (
-                    <Link
-                      key={col.label}
-                      href={col.href}
-                      className="block px-5 py-2.5 text-xs font-semibold text-gray-700 hover:text-[#B91C1C] hover:bg-[#FFF8F0]"
-                    >
-                      {col.label}
-                    </Link>
-                  ))}
+                <div className="absolute top-full left-0 pt-1.5 w-56 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 z-50">
+                  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 py-3">
+                    {collectionsNav.map((col) => (
+                      <Link
+                        key={col.label}
+                        href={col.href}
+                        className="block px-5 py-2.5 text-xs font-semibold text-gray-700 hover:text-[#B91C1C] hover:bg-[#FFF8F0]"
+                      >
+                        {col.label}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -286,15 +294,17 @@ export default function Navbar() {
 
               {/* Account Icon / Dropdown */}
               <div 
+                ref={userMenuRef}
                 className="relative"
-                onMouseEnter={() => user && setShowUserMenu(true)}
-                onMouseLeave={() => user && setShowUserMenu(false)}
               >
                 {user ? (
                   <div className="relative">
                     <button
+                      type="button"
                       onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="p-1 rounded-full text-gray-755 hover:text-[#B91C1C] border border-gray-100 shadow-sm transition-colors flex items-center justify-center"
+                      className="p-1 rounded-full text-gray-755 hover:text-[#B91C1C] border border-gray-100 shadow-sm transition-colors flex items-center justify-center focus:outline-none"
+                      aria-expanded={showUserMenu}
+                      aria-haspopup="true"
                     >
                       <div className="w-7 h-7 rounded-full bg-[#B91C1C] text-white flex items-center justify-center text-[11px] font-bold">
                         {profile?.full_name?.charAt(0) || user.email?.charAt(0)?.toUpperCase() || 'U'}
@@ -302,32 +312,34 @@ export default function Navbar() {
                     </button>
                     
                     {showUserMenu && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                        {profile?.role === 'admin' && (
+                      <div className="absolute right-0 top-full pt-2 w-48 z-50">
+                        <div className="bg-[#FFFFFF] rounded-2xl shadow-xl border border-gray-100 py-2">
+                          {profile?.role === 'admin' && (
+                            <Link
+                              href="/admin"
+                              onClick={() => setShowUserMenu(false)}
+                              className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-[#B91C1C] hover:bg-[#FFF8F0]"
+                            >
+                              <Shield className="w-4 h-4" />
+                              <span>Admin Dashboard</span>
+                            </Link>
+                          )}
                           <Link
-                            href="/admin"
+                            href="/account"
                             onClick={() => setShowUserMenu(false)}
-                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-[#B91C1C] hover:bg-[#FFF8F0]"
+                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-[#FFF8F0] hover:text-[#B91C1C]"
                           >
-                            <Shield className="w-4 h-4" />
-                            <span>Admin Dashboard</span>
+                            <User className="w-4 h-4" />
+                            <span>My Account</span>
                           </Link>
-                        )}
-                        <Link
-                          href="/account"
-                          onClick={() => setShowUserMenu(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-[#FFF8F0] hover:text-[#B91C1C]"
-                        >
-                          <User className="w-4 h-4" />
-                          <span>My Account</span>
-                        </Link>
-                        <button
-                          onClick={handleSignOut}
-                          className="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-[#FFF8F0] hover:text-[#B91C1C] text-left border-t border-gray-50"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          <span>Sign Out</span>
-                        </button>
+                          <button
+                            onClick={handleSignOut}
+                            className="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-[#FFF8F0] hover:text-[#B91C1C] text-left border-t border-gray-50"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

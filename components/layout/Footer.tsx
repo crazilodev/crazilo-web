@@ -99,11 +99,7 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
                   Makhana
                 </Link>
               </li>
-              <li>
-                <Link href="/category/trail-mixes" className="block py-1 hover:text-white transition-colors">
-                  Trail Mix
-                </Link>
-              </li>
+              
               <li>
                 <Link href="/category/combos" className="block py-1 hover:text-white transition-colors">
                   Combos
@@ -178,12 +174,12 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
                 </Link>
               </li>
               <li>
-                <Link href={siteSettings?.returns_policy_url || '#'} className="block py-1 hover:text-white transition-colors">
+                <Link href={(siteSettings as any)?.shipping_policy_url || '/shipping-policy'} className="block py-1 hover:text-white transition-colors">
                   Shipping & Delivery
                 </Link>
               </li>
               <li>
-                <Link href={siteSettings?.returns_policy_url || '#'} className="block py-1 hover:text-white transition-colors">
+                <Link href={siteSettings?.returns_policy_url || '/returns-policy'} className="block py-1 hover:text-white transition-colors">
                   Returns & Refunds
                 </Link>
               </li>
@@ -193,7 +189,7 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
                 </Link>
               </li>
               <li>
-                <Link href="#contact" className="block py-1 hover:text-white transition-colors">
+                <Link href="/contact" className="block py-1 hover:text-white transition-colors">
                   Contact Us
                 </Link>
               </li>
@@ -263,10 +259,10 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
           <p>© {currentYear} Crazilo. All rights reserved.</p>
           
           <div className="flex items-center gap-6">
-            <Link href={siteSettings?.privacy_policy_url || '#'} className="hover:text-white transition-colors">
+            <Link href={siteSettings?.privacy_policy_url || '/privacy-policy'} className="hover:text-white transition-colors">
               Privacy Policy
             </Link>
-            <Link href={siteSettings?.terms_url || '#'} className="hover:text-white transition-colors">
+            <Link href={siteSettings?.terms_url || '/terms-of-service'} className="hover:text-white transition-colors">
               Terms of Service
             </Link>
           </div>
