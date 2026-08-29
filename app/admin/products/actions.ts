@@ -17,8 +17,11 @@ interface VariantPayload {
 }
 
 function normalizeProduct(data: ProductFormData) {
+  const images = Array.isArray(data.images) ? data.images : []
   return {
     ...data,
+    images: images,
+    thumbnail_url: images.length > 0 ? images[0] : (data.thumbnail_url || null),
     compare_price: data.compare_price || null,
     cost_price: data.cost_price || null,
     sku: data.sku || null,
@@ -117,6 +120,9 @@ export async function createProductAction(data: ProductFormData, variants: Varia
     }
 
     revalidatePath('/admin/products')
+    revalidatePath('/products')
+    revalidatePath(`/products/${productPayload.slug}`)
+    revalidatePath('/')
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message || 'Operation failed' }
@@ -275,6 +281,10 @@ export async function updateProductAction(
     }
 
     revalidatePath('/admin/products')
+    revalidatePath(`/admin/products/${productId}/edit`)
+    revalidatePath('/products')
+    revalidatePath(`/products/${productPayload.slug}`)
+    revalidatePath('/')
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err.message || 'Operation failed' }
