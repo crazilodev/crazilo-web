@@ -34,7 +34,12 @@ interface Variant {
 export default function ProductForm({ product }: ProductFormProps) {
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
-  const [images, setImages] = useState<string[]>(product?.images || [])
+  const initialImages = Array.isArray(product?.images) && product.images.length > 0
+    ? product.images
+    : product?.thumbnail_url
+    ? [product.thumbnail_url]
+    : []
+  const [images, setImages] = useState<string[]>(initialImages)
   const [loading, setLoading] = useState(false)
   const [tags, setTags] = useState<string[]>(product?.tags || [])
   const [tagInput, setTagInput] = useState('')
@@ -69,6 +74,8 @@ export default function ProductForm({ product }: ProductFormProps) {
       track_inventory: product.track_inventory,
       weight_grams: product.weight_grams || undefined,
       unit: product.unit,
+      images: initialImages,
+      thumbnail_url: product.thumbnail_url || (initialImages[0] || null),
       is_active: product.is_active,
       is_featured: product.is_featured,
       is_bestseller: product.is_bestseller,
@@ -81,7 +88,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       is_active: true, is_featured: false, is_bestseller: false,
       is_new: false, is_organic: false, no_added_sugar: false,
       track_inventory: true, stock_quantity: 0, low_stock_threshold: 10,
-      unit: 'g', tags: [],
+      unit: 'g', tags: [], images: [], thumbnail_url: null,
     },
   })
 

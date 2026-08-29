@@ -279,9 +279,9 @@ export default function AdminProductsPage() {
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg overflow-hidden relative bg-gray-50 shadow-inner flex-shrink-0">
-                            {product.thumbnail_url ? (
+                            {(product.thumbnail_url || product.images?.[0]) ? (
                               <Image
-                                src={product.thumbnail_url}
+                                src={product.thumbnail_url || product.images?.[0]!}
                                 alt={product.name}
                                 fill
                                 className="object-cover"
