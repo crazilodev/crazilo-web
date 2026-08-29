@@ -15,6 +15,8 @@ export const productSchema = z.object({
   track_inventory: z.boolean().default(true),
   weight_grams: z.coerce.number().int().optional().nullable(),
   unit: z.enum(['g', 'kg', 'ml', 'l', 'pcs', 'pack']).default('g'),
+  images: z.array(z.string()).default([]),
+  thumbnail_url: z.string().optional().nullable(),
   is_active: z.boolean().default(true),
   is_featured: z.boolean().default(false),
   is_bestseller: z.boolean().default(false),
