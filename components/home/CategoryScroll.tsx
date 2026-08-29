@@ -31,7 +31,8 @@ export default function CategoryScroll({ categories }: CategoryScrollProps) {
             <Link
               key={item.id}
               href={`/category/${item.slug}`}
-              className="flex-shrink-0 relative w-36 h-24 sm:w-56 sm:h-36 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group bg-gray-50 border border-gray-100/50"
+              className="flex-shrink-0 relative w-36 h-24 sm:w-56 sm:h-36 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group bg-[#E9CDAF] border border-[#E9CDAF]/60"
+              style={{ backgroundColor: '#E9CDAF' }}
             >
               {/* Category Background Image */}
               {item.image_url ? (
@@ -42,15 +43,15 @@ export default function CategoryScroll({ categories }: CategoryScrollProps) {
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-[#B91C1C] to-[#7F1D1D] opacity-90" />
+                <div className="absolute inset-0 bg-[#E9CDAF]" />
               )}
 
-              {/* Dark Gradient Overlay for High Legibility */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent group-hover:from-black/90 transition-all duration-300" />
+              {/* Subtle Gradient for Clean Text Legibility without Dark Grey Fade */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent group-hover:from-black/60 transition-all duration-300" />
 
               {/* Text Label Overlay */}
               <div className="absolute inset-x-0 bottom-3 text-center px-2 z-10 flex items-center justify-center h-6">
-                <span className="text-[10px] sm:text-xs font-black uppercase text-white tracking-widest leading-none drop-shadow-md group-hover:text-[#D97706] transition-colors whitespace-nowrap">
+                <span className="text-[10px] sm:text-xs font-black uppercase text-white tracking-widest leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)] group-hover:text-amber-100 transition-colors whitespace-nowrap">
                   {item.name}
                 </span>
               </div>
