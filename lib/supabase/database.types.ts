@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      app_health: {
+        Row: {
+          id: number
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           scope: string

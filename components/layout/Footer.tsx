@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
-  Phone, Mail, MapPin, Instagram, Facebook, Youtube, Heart, MessageSquare, ChevronDown
+  Phone, Mail, MapPin, Instagram, Facebook, Youtube, MessageSquare, ChevronDown
 } from 'lucide-react'
 import type { Category, SiteSettings } from '@/types'
 
@@ -18,7 +18,7 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
   const router = useRouter()
   const currentYear = new Date().getFullYear()
   const storeLocatorHref = siteSettings?.store_locator_url || '/store-locator'
-  
+
   const [openSection, setOpenSection] = useState<string | null>(null)
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section)
@@ -36,7 +36,7 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
       {/* 5-Column Grid */}
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mb-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 text-left">
-          
+
           {/* Column 1: Logo & Branding (span 3) */}
           <div className="lg:col-span-3 space-y-4">
             <Image
@@ -72,9 +72,8 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
               <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest sm:mb-4 py-2 sm:py-0 w-full flex items-center justify-between">
                 <span>Shop</span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${
-                    openSection === 'shop' ? 'rotate-180' : ''
-                  }`}
+                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${openSection === 'shop' ? 'rotate-180' : ''
+                    }`}
                 />
               </h4>
             </button>
@@ -99,7 +98,7 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
                   Makhana
                 </Link>
               </li>
-              
+
               <li>
                 <Link href="/category/combos" className="block py-1 hover:text-white transition-colors">
                   Combos
@@ -122,9 +121,8 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
               <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest sm:mb-4 py-2 sm:py-0 w-full flex items-center justify-between">
                 <span>Collections</span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${
-                    openSection === 'collections' ? 'rotate-180' : ''
-                  }`}
+                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${openSection === 'collections' ? 'rotate-180' : ''
+                    }`}
                 />
               </h4>
             </button>
@@ -161,9 +159,8 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
               <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest sm:mb-4 py-2 sm:py-0 w-full flex items-center justify-between">
                 <span>Help</span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${
-                    openSection === 'help' ? 'rotate-180' : ''
-                  }`}
+                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${openSection === 'help' ? 'rotate-180' : ''
+                    }`}
                 />
               </h4>
             </button>
@@ -181,6 +178,16 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
               <li>
                 <Link href={siteSettings?.returns_policy_url || '/returns-policy'} className="block py-1 hover:text-white transition-colors">
                   Returns & Refunds
+                </Link>
+              </li>
+              <li>
+                <Link href={siteSettings?.privacy_policy_url || '/privacy-policy'} className="block py-1 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href={siteSettings?.terms_url || '/terms-of-service'} className="block py-1 hover:text-white transition-colors">
+                  Terms of Service
                 </Link>
               </li>
               <li>
@@ -205,9 +212,8 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
               <h4 className="text-xs font-black text-[#D97706] uppercase tracking-widest sm:mb-4 py-2 sm:py-0 w-full flex items-center justify-between">
                 <span>Get In Touch</span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${
-                    openSection === 'get-in-touch' ? 'rotate-180' : ''
-                  }`}
+                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 sm:hidden ${openSection === 'get-in-touch' ? 'rotate-180' : ''
+                    }`}
                 />
               </h4>
             </button>
@@ -254,23 +260,19 @@ export default function Footer({ categories, siteSettings }: FooterProps) {
       </div>
 
       {/* Bottom Footer Credits */}
-      <div className="border-t border-white/10 pt-6 mt-6 bg-black/10">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-white/70">
+      <div className=" mt-6">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center gap-1.5 text-xs font-semibold text-white/70">
           <p>© {currentYear} Crazilo. All rights reserved.</p>
-          
-          <div className="flex items-center gap-6">
-            <Link href={siteSettings?.privacy_policy_url || '/privacy-policy'} className="hover:text-white transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href={siteSettings?.terms_url || '/terms-of-service'} className="hover:text-white transition-colors">
-              Terms of Service
-            </Link>
-          </div>
-
-          <p className="flex items-center gap-1">
-            <span>Made with</span>
-            <Heart className="w-3 h-3 text-[#D97706] fill-[#D97706]" />
-            <span>in India</span>
+          <p className="text-[11px] text-white/60">
+            Crafted by{' '}
+            <a
+              href="https://www.ekodrix.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#D97706] hover:text-white font-bold transition-colors underline-offset-2 hover:underline"
+            >
+              Ekodrix
+            </a>
           </p>
         </div>
       </div>
