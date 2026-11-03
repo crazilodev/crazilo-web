@@ -12,6 +12,7 @@ const siteSettingsSchema = z.object({
   support_hours: z.string().max(100, 'Hours description is too long').trim().nullable().optional(),
   footer_description: z.string().max(500, 'Footer description is too long').trim().nullable().optional(),
   free_shipping_threshold: z.number().min(0, 'Free shipping threshold must be at least 0'),
+  shipping_fee: z.number().min(0, 'Shipping fee must be at least 0').default(50),
   currency_code: z.string().length(3, 'Currency code must be exactly 3 characters').toUpperCase(),
   instagram_url: z.string().url('Invalid Instagram URL').max(500).trim().nullable().optional().or(z.literal('')),
   facebook_url: z.string().url('Invalid Facebook URL').max(500).trim().nullable().optional().or(z.literal('')),
@@ -40,6 +41,7 @@ export async function updateSiteSettingsAction(payload: any) {
       support_hours: parsed.support_hours || null,
       footer_description: parsed.footer_description || null,
       free_shipping_threshold: parsed.free_shipping_threshold,
+      shipping_fee: parsed.shipping_fee,
       currency_code: parsed.currency_code,
       instagram_url: parsed.instagram_url || null,
       facebook_url: parsed.facebook_url || null,
@@ -65,6 +67,8 @@ export async function updateSiteSettingsAction(payload: any) {
     // Revalidate paths that read site_settings
     revalidatePath('/admin/settings')
     revalidatePath('/') // Revalidates layout (footer, announcement bar)
+    revalidatePath('/cart')
+    revalidatePath('/checkout')
     return { success: true }
   } catch (err: any) {
     if (err instanceof z.ZodError) {

@@ -30,6 +30,7 @@ interface SiteSettingsForm {
   support_hours: string
   footer_description: string
   free_shipping_threshold: number
+  shipping_fee: number
   currency_code: string
   instagram_url: string
   facebook_url: string
@@ -55,6 +56,7 @@ export default function AdminSettingsPage() {
     defaultValues: {
       store_name: 'Crazilo',
       free_shipping_threshold: 599,
+      shipping_fee: 50,
       currency_code: 'INR',
     },
   })
@@ -73,6 +75,7 @@ export default function AdminSettingsPage() {
           support_hours: data.support_hours || '',
           footer_description: data.footer_description || '',
           free_shipping_threshold: Number(data.free_shipping_threshold),
+          shipping_fee: Number((data as any).shipping_fee ?? 50),
           currency_code: data.currency_code,
           instagram_url: data.instagram_url || '',
           facebook_url: data.facebook_url || '',
@@ -102,6 +105,7 @@ export default function AdminSettingsPage() {
       const payload = {
         ...formData,
         free_shipping_threshold: Number(formData.free_shipping_threshold),
+        shipping_fee: Number(formData.shipping_fee),
       }
       const result = await updateSiteSettingsAction(payload)
       if (!result.success) {
@@ -233,7 +237,7 @@ export default function AdminSettingsPage() {
               <Coins className="w-5 h-5 text-brand-red" />
               <h2 className="font-heading text-lg font-black text-gray-900">E-Commerce Configuration</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label htmlFor="free_shipping_threshold" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
                   Free Shipping Threshold (₹) *
@@ -248,6 +252,22 @@ export default function AdminSettingsPage() {
                     min: { value: 0, message: 'Threshold must be at least 0' },
                   })}
                   error={errors.free_shipping_threshold?.message}
+                />
+              </div>
+              <div>
+                <label htmlFor="shipping_fee" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
+                  Standard Shipping Fee (₹) *
+                </label>
+                <Input
+                  id="shipping_fee"
+                  type="number"
+                  placeholder="50"
+                  {...register('shipping_fee', {
+                    required: 'Shipping fee is required',
+                    valueAsNumber: true,
+                    min: { value: 0, message: 'Fee must be at least 0' },
+                  })}
+                  error={errors.shipping_fee?.message}
                 />
               </div>
               <div>

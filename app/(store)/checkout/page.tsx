@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/utils/formatPrice'
 import { orderSchema, OrderFormData } from '@/lib/validations/orderSchema'
 import Button from '@/components/ui/Button'
+import { useShippingSettings } from '@/lib/hooks/useShippingSettings'
 import Input from '@/components/ui/Input'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
@@ -21,7 +22,8 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const totalPrice = getTotalPrice()
-  const shipping = totalPrice >= 599 ? 0 : 50
+  const { calculateShipping } = useShippingSettings()
+  const shipping = calculateShipping(totalPrice)
   const grandTotal = totalPrice + shipping
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<OrderFormData>({
