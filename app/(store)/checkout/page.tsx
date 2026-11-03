@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { MapPin, CreditCard, Loader2, CheckCircle } from 'lucide-react'
+import { MapPin, CreditCard, User } from 'lucide-react'
 import { useCartStore } from '@/lib/store/cartStore'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/utils/formatPrice'
@@ -18,15 +19,37 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { items, getTotalPrice, clearCart } = useCartStore()
   const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState<'address' | 'review'>('address')
+  const [currentUser, setCurrentUser] = useState<any>(null)
   const totalPrice = getTotalPrice()
   const shipping = totalPrice >= 599 ? 0 : 50
   const grandTotal = totalPrice + shipping
 
-  const { register, handleSubmit, formState: { errors } } = useForm<OrderFormData>({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
     defaultValues: { payment_method: 'cod', same_as_shipping: true },
   })
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setCurrentUser(user)
+        if (user.email) setValue('shipping_address.email', user.email)
+        if (user.user_metadata?.full_name) {
+          setValue('shipping_address.full_name', user.user_metadata.full_name)
+        }
+      }
+    }
+    checkUser()
+  }, [setValue])
+
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('payment')
+    if (p === 'failed') toast.error('Payment failed. Your order was not placed. Please try again.')
+    else if (p === 'cancelled') toast.error('Payment cancelled. Your order was not placed.')
+    else if (p === 'invalid') toast.error('Payment response could not be verified. If money was debited, contact support.')
+  }, [])
 
   if (items.length === 0) {
     router.push('/cart')
@@ -36,10 +59,6 @@ export default function CheckoutPage() {
   const onSubmit = async (data: OrderFormData) => {
     setLoading(true)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/auth/login?redirect=/checkout'); return }
-
       const orderItems = items.map((item) => ({
         product_id: item.product.id,
         variant_id: item.variant?.id || null,
@@ -62,6 +81,30 @@ export default function CheckoutPage() {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Failed to place order')
 
+      if (data.payment_method === 'online') {
+        const payRes = await fetch('/api/payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_id: result.order_id }),
+        })
+        const pay = await payRes.json()
+        if (!payRes.ok) throw new Error(pay.error || 'Unable to start payment')
+
+        const form = document.createElement('form')
+        form.method = 'POST'
+        form.action = pay.action
+        Object.entries(pay.fields as Record<string, string>).forEach(([name, value]) => {
+          const input = document.createElement('input')
+          input.type = 'hidden'
+          input.name = name
+          input.value = value
+          form.appendChild(input)
+        })
+        document.body.appendChild(form)
+        form.submit()
+        return
+      }
+
       clearCart()
       toast.success('Order placed successfully!')
       router.push(`/orders?success=${result.order_number}`)
@@ -81,6 +124,27 @@ export default function CheckoutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Form */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Guest / Account Banner */}
+              {!currentUser && (
+                <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Guest Checkout</p>
+                      <p className="text-xs text-gray-500">You can complete your purchase without creating an account.</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/auth/login?redirect=/checkout"
+                    className="text-xs font-semibold text-brand-red hover:underline shrink-0"
+                  >
+                    Log In
+                  </Link>
+                </div>
+              )}
+
               {/* Shipping Address */}
               <div className="bg-white rounded-2xl p-6 shadow-card">
                 <div className="flex items-center gap-3 mb-6">
@@ -91,17 +155,62 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input label="Full Name" {...register('shipping_address.full_name')} error={errors.shipping_address?.full_name?.message} id="checkout-name" />
-                  <Input label="Phone Number" type="tel" {...register('shipping_address.phone')} error={errors.shipping_address?.phone?.message} id="checkout-phone" />
+                  <Input
+                    label="Full Name"
+                    {...register('shipping_address.full_name')}
+                    error={errors.shipping_address?.full_name?.message}
+                    id="checkout-name"
+                  />
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    placeholder="you@example.com"
+                    {...register('shipping_address.email')}
+                    error={errors.shipping_address?.email?.message}
+                    id="checkout-email"
+                  />
+                  <Input
+                    label="Phone Number"
+                    type="tel"
+                    {...register('shipping_address.phone')}
+                    error={errors.shipping_address?.phone?.message}
+                    id="checkout-phone"
+                  />
+                  <Input
+                    label="Pincode"
+                    {...register('shipping_address.pincode')}
+                    error={errors.shipping_address?.pincode?.message}
+                    id="checkout-pincode"
+                  />
                   <div className="sm:col-span-2">
-                    <Input label="Address Line 1" placeholder="House no, Street name" {...register('shipping_address.address_line1')} error={errors.shipping_address?.address_line1?.message} id="checkout-address1" />
+                    <Input
+                      label="Address Line 1"
+                      placeholder="House no, Street name"
+                      {...register('shipping_address.address_line1')}
+                      error={errors.shipping_address?.address_line1?.message}
+                      id="checkout-address1"
+                    />
                   </div>
                   <div className="sm:col-span-2">
-                    <Input label="Address Line 2 (Optional)" placeholder="Apartment, floor, etc." {...register('shipping_address.address_line2')} id="checkout-address2" />
+                    <Input
+                      label="Address Line 2 (Optional)"
+                      placeholder="Apartment, floor, etc."
+                      {...register('shipping_address.address_line2')}
+                      id="checkout-address2"
+                    />
                   </div>
-                  <Input label="City" {...register('shipping_address.city')} error={errors.shipping_address?.city?.message} id="checkout-city" />
-                  <Input label="State" {...register('shipping_address.state')} error={errors.shipping_address?.state?.message} id="checkout-state" />
-                  <Input label="Pincode" {...register('shipping_address.pincode')} error={errors.shipping_address?.pincode?.message} id="checkout-pincode" />
+                  <Input
+                    label="City"
+                    {...register('shipping_address.city')}
+                    error={errors.shipping_address?.city?.message}
+                    id="checkout-city"
+                  />
+                  <Input
+                    label="State"
+                    {...register('shipping_address.state')}
+                    error={errors.shipping_address?.state?.message}
+                    id="checkout-state"
+                  />
                 </div>
 
                 <div className="mt-4">
@@ -133,11 +242,11 @@ export default function CheckoutPage() {
                       <p className="text-xs text-gray-500">Pay when your order arrives</p>
                     </div>
                   </label>
-                  <label className="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 cursor-pointer opacity-50">
-                    <input type="radio" {...register('payment_method')} value="online" disabled className="accent-brand-red" />
+                  <label className="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 cursor-pointer">
+                    <input type="radio" {...register('payment_method')} value="online" className="accent-brand-red" />
                     <div>
                       <p className="font-semibold text-sm text-gray-900">Online Payment</p>
-                      <p className="text-xs text-gray-500">Coming soon</p>
+                      <p className="text-xs text-gray-500">Cards, UPI, Net Banking via PayU</p>
                     </div>
                   </label>
                 </div>
