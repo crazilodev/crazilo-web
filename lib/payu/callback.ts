@@ -9,8 +9,8 @@ function redirectTo(path: string) {
 }
 
 /**
- * Shared browser-callback handler (surl / furl). The posted status is never trusted:
- * reverse hash must match AND the Verify Payment API decides the final outcome.
+ * Shared browser-callback handler (surl / furl).
+ * Verifies PayU's reverse SHA-512 cryptographic hash before processing.
  */
 export async function handlePayuCallback(request: Request) {
   try {
@@ -20,7 +20,16 @@ export async function handlePayuCallback(request: Request) {
       return redirectTo('/checkout?payment=invalid')
     }
 
-    const outcome = await settleTransaction(body.txnid)
+    const payloadStatus =
+      String(body.status).toLowerCase() === 'success' ? 'success' : 'failed'
+
+    const outcome = await settleTransaction(body.txnid, {
+      status: payloadStatus,
+      mihpayid: body.mihpayid || null,
+      amount: Number(body.amount) || null,
+      raw: body,
+    })
+
     const order = encodeURIComponent(outcome.orderNumber || '')
 
     switch (outcome.result) {
@@ -45,4 +54,3 @@ export async function handlePayuCallback(request: Request) {
     return redirectTo('/orders?payment=pending')
   }
 }
-
