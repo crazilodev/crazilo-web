@@ -113,10 +113,17 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const isOrderConfirmation =
+    pathname.startsWith('/orders') &&
+    (request.nextUrl.searchParams.has('success') ||
+      request.nextUrl.searchParams.has('paid') ||
+      request.nextUrl.searchParams.has('payment'))
+
+  // Allow guests to checkout and view payment confirmation.
+  // Require login for account page or general order history.
   if (
-    pathname.startsWith('/orders') ||
     pathname.startsWith('/account') ||
-    pathname.startsWith('/checkout')
+    (pathname.startsWith('/orders') && !isOrderConfirmation)
   ) {
     if (!user) {
       const loginUrl = new URL('/auth/login', request.url)

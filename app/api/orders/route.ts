@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { createOrderWithItems, getUserOrderById, getUserOrders } from '@/lib/data/orders'
 
 export async function GET(request: Request) {
@@ -30,24 +31,35 @@ export async function POST(request: Request) {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Active-account enforcement: suspended users cannot create orders
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_active')
-      .eq('id', user.id)
-      .single()
+    if (user) {
+      // Active-account enforcement: suspended users cannot create orders
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_active')
+        .eq('id', user.id)
+        .single()
 
-    if (!profile || !profile.is_active) {
-      return NextResponse.json({ error: 'Your account has been suspended. Order placement is not permitted.' }, { status: 403 })
+      if (!profile || !profile.is_active) {
+        return NextResponse.json({ error: 'Your account has been suspended. Order placement is not permitted.' }, { status: 403 })
+      }
     }
 
     const body = await request.json()
     const { shipping_address, billing_address, items, coupon_code, customer_notes, payment_method } = body
 
-    if (!shipping_address || !shipping_address.full_name || !shipping_address.address_line1 || !shipping_address.phone) {
+    if (
+      !shipping_address ||
+      !shipping_address.full_name ||
+      !shipping_address.address_line1 ||
+      !shipping_address.phone
+    ) {
       return NextResponse.json({ error: 'Invalid or incomplete shipping address' }, { status: 400 })
+    }
+
+    // Require email for guest orders to send confirmations and process payments
+    if (!user && (!shipping_address.email || !shipping_address.email.includes('@'))) {
+      return NextResponse.json({ error: 'Valid email address is required for guest checkout' }, { status: 400 })
     }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -64,7 +76,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid order items' }, { status: 400 })
     }
 
-    const order = await createOrderWithItems(supabase, {
+    // Use user-scoped client if authenticated, or admin client for guests
+    const dbClient = user ? supabase : supabaseAdmin
+
+    const order = await createOrderWithItems(dbClient, {
       shippingAddress: shipping_address,
       billingAddress: billing_address || shipping_address,
       couponCode: coupon_code || null,

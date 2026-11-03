@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const addressSchema = z.object({
   full_name: z.string().min(2, 'Name is required'),
+  email: z.string().email('Valid email is required'),
   phone: z.string().min(10, 'Valid phone number required'),
   address_line1: z.string().min(5, 'Address is required'),
   address_line2: z.string().optional(),
