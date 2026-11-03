@@ -5,12 +5,14 @@ import Image from 'next/image'
 import { useCartStore } from '@/lib/store/cartStore'
 import { formatPrice } from '@/lib/utils/formatPrice'
 import Button from '@/components/ui/Button'
+import { useShippingSettings } from '@/lib/hooks/useShippingSettings'
 import { Trash2, ShoppingBag, ArrowRight, Minus, Plus } from 'lucide-react'
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCartStore()
   const totalPrice = getTotalPrice()
-  const shipping = totalPrice >= 599 ? 0 : 50
+  const { calculateShipping, remainingForFreeShipping } = useShippingSettings()
+  const shipping = calculateShipping(totalPrice)
   const grandTotal = totalPrice + shipping
 
   return (
@@ -96,7 +98,7 @@ export default function CartPage() {
                   </div>
                   {shipping > 0 && (
                     <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                      Add {formatPrice(599 - totalPrice)} more for free shipping!
+                      Add {formatPrice(remainingForFreeShipping(totalPrice))} more for free shipping!
                     </p>
                   )}
                   <div className="divider-gold" />

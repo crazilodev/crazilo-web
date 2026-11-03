@@ -34,6 +34,7 @@ export type Database = {
           support_hours: string | null
           footer_description: string | null
           free_shipping_threshold: number
+          shipping_fee: number
           currency_code: string
           instagram_url: string | null
           facebook_url: string | null
@@ -56,6 +57,7 @@ export type Database = {
           support_hours?: string | null
           footer_description?: string | null
           free_shipping_threshold?: number
+          shipping_fee?: number
           currency_code?: string
           instagram_url?: string | null
           facebook_url?: string | null
@@ -78,6 +80,7 @@ export type Database = {
           support_hours?: string | null
           footer_description?: string | null
           free_shipping_threshold?: number
+          shipping_fee?: number
           currency_code?: string
           instagram_url?: string | null
           facebook_url?: string | null

@@ -7,10 +7,12 @@ import Image from 'next/image'
 import { useCartStore } from '@/lib/store/cartStore'
 import { formatPrice } from '@/lib/utils/formatPrice'
 import Button from '@/components/ui/Button'
+import { useShippingSettings } from '@/lib/hooks/useShippingSettings'
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, getTotalPrice, clearCart } =
     useCartStore()
+  const { remainingForFreeShipping, progressPercentage, isFreeShipping } = useShippingSettings()
   const totalPrice = getTotalPrice()
 
   return (
@@ -158,19 +160,26 @@ export default function CartDrawer() {
             {items.length > 0 && (
               <div className="border-t border-gray-100 p-5 space-y-4 bg-white">
                 {/* Free shipping progress */}
-                {totalPrice < 599 && (
-                  <div className="bg-amber-50 rounded-xl p-3">
-                    <div className="flex justify-between text-xs text-amber-700 mb-2">
-                      <span>Add {formatPrice(599 - totalPrice)} more for free shipping</span>
-                      <span>{Math.round((totalPrice / 599) * 100)}%</span>
+                {totalPrice > 0 && (
+                  isFreeShipping(totalPrice) ? (
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center gap-2 text-xs font-semibold text-emerald-800">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <span>You have unlocked FREE SHIPPING!</span>
                     </div>
-                    <div className="h-1.5 bg-amber-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min((totalPrice / 599) * 100, 100)}%` }}
-                      />
+                  ) : (
+                    <div className="bg-amber-50 rounded-xl p-3">
+                      <div className="flex justify-between text-xs text-amber-700 mb-2">
+                        <span>Add {formatPrice(remainingForFreeShipping(totalPrice))} more for free shipping</span>
+                        <span>{progressPercentage(totalPrice)}%</span>
+                      </div>
+                      <div className="h-1.5 bg-amber-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                          style={{ width: `${progressPercentage(totalPrice)}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )
                 )}
 
                 {/* Total */}
