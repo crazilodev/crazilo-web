@@ -1,5 +1,5 @@
 import 'server-only'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { getPayuConfig } from './config'
 import { generateApiHash, verifyReverseHash } from './hash'
 
@@ -12,7 +12,7 @@ export type VerifyResult = {
   raw: unknown
 }
 
-/** Server-to-server Verify Payment API call. This is the source of truth for payment state. */
+/** Server-to-server Verify Payment API call. */
 export async function verifyPaymentWithPayu(txnid: string): Promise<VerifyResult> {
   const cfg = getPayuConfig()
   const body = new URLSearchParams({
@@ -55,38 +55,67 @@ export async function verifyPaymentWithPayu(txnid: string): Promise<VerifyResult
 
 export type SettleOutcome = {
   txnid: string
-  result: string // output of apply_payu_result, or 'unverified'
+  result: string
   orderId: string | null
   orderNumber: string | null
 }
 
-/** Verifies a txn with PayU, then applies the result atomically + idempotently in the DB. */
-export async function settleTransaction(txnid: string): Promise<SettleOutcome> {
-  const { data: txn } = await supabaseAdmin
-    .from('payment_transactions')
-    .select('order_id, orders(order_number)')
-    .eq('txnid', txnid)
-    .maybeSingle()
+/**
+ * Applies the payment result atomically in the database via the SECURITY DEFINER RPC.
+ * Accepts verified payload from authentic PayU reverse-hash callback or verifies via API.
+ */
+export async function settleTransaction(
+  txnid: string,
+  verifiedPayload?: { status: string; mihpayid?: string | null; amount?: number | null; raw?: any }
+): Promise<SettleOutcome> {
+  const supabase = createClient()
 
-  const base = {
-    txnid,
-    orderId: txn?.order_id ?? null,
-    orderNumber: txn?.orders?.order_number ?? null,
+  let vStatus = verifiedPayload?.status
+  let vMihpayid = verifiedPayload?.mihpayid || null
+  let vAmount = verifiedPayload?.amount ?? null
+  let vRaw = verifiedPayload?.raw || null
+
+  // If status is not provided, verify with PayU API
+  if (!vStatus) {
+    try {
+      const v = await verifyPaymentWithPayu(txnid)
+      if (v.status !== 'unknown') {
+        vStatus = v.status
+        vMihpayid = v.mihpayid
+        vAmount = v.amount
+        vRaw = v.raw
+      }
+    } catch (e: any) {
+      console.warn('[payu] verifyPaymentWithPayu call failed:', e?.message)
+    }
   }
-  if (!txn) return { ...base, result: 'unknown_txn' }
 
-  const v = await verifyPaymentWithPayu(txnid)
-  if (v.status === 'unknown') return { ...base, result: 'unverified' }
+  if (!vStatus) {
+    return { txnid, result: 'unverified', orderId: null, orderNumber: null }
+  }
 
-  const { data, error } = await supabaseAdmin.rpc('apply_payu_result', {
+  // Execute atomic DB settlement using SECURITY DEFINER function
+  const { data, error } = await supabase.rpc('apply_payu_result', {
     p_txnid: txnid,
-    p_status: v.status,
-    p_gateway_payment_id: v.mihpayid,
-    p_amount: v.amount,
-    p_response: v.raw,
+    p_status: vStatus,
+    p_gateway_payment_id: vMihpayid,
+    p_amount: vAmount,
+    p_response: vRaw,
   })
-  if (error) throw error
-  return { ...base, result: String(data) }
+
+  if (error) {
+    console.error('[payu] apply_payu_result error:', error)
+    throw error
+  }
+
+  const resultObj = typeof data === 'object' && data !== null ? data : { result: String(data) }
+
+  return {
+    txnid,
+    result: String(resultObj.result || 'unknown'),
+    orderId: resultObj.order_id || null,
+    orderNumber: resultObj.order_number || null,
+  }
 }
 
 /** Parses PayU callback/webhook body (form-encoded or JSON) into a flat string map. */
@@ -98,7 +127,9 @@ export async function parsePayuBody(request: Request): Promise<Record<string, st
     for (const [k, v] of Object.entries(json || {})) out[k] = v == null ? '' : String(v)
   } else {
     const form = await request.formData().catch(() => null)
-    form?.forEach((v, k) => { out[k] = String(v) })
+    form?.forEach((v, k) => {
+      out[k] = String(v)
+    })
   }
   return out
 }
@@ -108,4 +139,3 @@ export function isAuthenticPayuPayload(p: Record<string, string>): boolean {
   const cfg = getPayuConfig()
   return !!p.txnid && p.key === cfg.key && verifyReverseHash(p, cfg.salt)
 }
-
