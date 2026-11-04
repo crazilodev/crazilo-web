@@ -39,7 +39,6 @@ interface SiteSettingsForm {
   privacy_policy_url: string
   terms_url: string
   returns_policy_url: string
-  store_locator_url: string
   faqs_url: string
 }
 
@@ -84,7 +83,6 @@ export default function AdminSettingsPage() {
           privacy_policy_url: data.privacy_policy_url || '',
           terms_url: data.terms_url || '',
           returns_policy_url: data.returns_policy_url || '',
-          store_locator_url: data.store_locator_url || '',
           faqs_url: data.faqs_url || '',
         })
       }
@@ -379,17 +377,6 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <div>
-                <label htmlFor="store_locator_url" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
-                  Store Locator Href
-                </label>
-                <Input
-                  id="store_locator_url"
-                  placeholder="/store-locator"
-                  {...register('store_locator_url')}
-                  error={errors.store_locator_url?.message}
-                />
-              </div>
-              <div className="sm:col-span-2">
                 <label htmlFor="faqs_url" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
                   FAQs Href
                 </label>

@@ -1,15 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Order } from '@/types'
 import { formatPrice } from '@/lib/utils/formatPrice'
-import { Package, ChevronRight, Truck, CheckCircle, Clock, XCircle, AlertCircle, ShoppingBag } from 'lucide-react'
+import { Package, ChevronRight, Truck, CheckCircle, Clock, XCircle, AlertCircle, ShoppingBag, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { getUserOrders } from '@/lib/data/orders'
 import { useCartStore } from '@/lib/store/cartStore'
+import { useAuthModalStore } from '@/lib/store/authModalStore'
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', color: 'text-yellow-600 bg-yellow-50', icon: Clock },
@@ -21,7 +22,7 @@ const STATUS_CONFIG = {
   refunded: { label: 'Refunded', color: 'text-gray-600 bg-gray-100', icon: XCircle },
 }
 
-export default function OrdersPage() {
+function OrdersPageContent() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [isGuest, setIsGuest] = useState(false)
@@ -32,8 +33,8 @@ export default function OrdersPage() {
   const clearCart = useCartStore((s) => s.clearCart)
 
   useEffect(() => {
-    if (paidOrder) clearCart()
-  }, [paidOrder, clearCart])
+    if (paidOrder || successOrder) clearCart()
+  }, [paidOrder, successOrder, clearCart])
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -60,7 +61,9 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="font-heading text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
+        <h1 className="font-heading text-3xl font-bold text-gray-900 mb-8">
+          {successOrder ? 'Order Confirmation' : 'My Orders'}
+        </h1>
 
         {paymentState && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-center gap-4 mb-6">
@@ -73,16 +76,52 @@ export default function OrdersPage() {
           </div>
         )}
 
+        {/* High-visibility celebratory banner when order is confirmed */}
         {successOrder && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-center gap-4 mb-6"
+            className="bg-gradient-to-r from-emerald-500/10 via-emerald-50 to-teal-50 border-2 border-emerald-500/30 rounded-3xl p-6 sm:p-8 mb-8 shadow-sm"
           >
-            <CheckCircle className="w-8 h-8 text-emerald-600 flex-shrink-0" />
-            <div>
-              <p className="font-semibold text-emerald-800">Order Placed Successfully</p>
-              <p className="text-sm text-emerald-600">Order #{successOrder} has been confirmed. You&apos;ll receive updates via email.</p>
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 shadow-inner ring-4 ring-emerald-50">
+                <CheckCircle className="w-8 h-8 stroke-[2.5]" />
+              </div>
+              <div className="flex-1">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1.5">
+                  <span className="px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-600 text-white">
+                    Confirmed
+                  </span>
+                  <span className="font-mono text-sm font-extrabold text-gray-900">
+                    Order #{successOrder}
+                  </span>
+                </div>
+                <h2 className="font-heading font-black text-xl sm:text-2xl text-gray-900">
+                  Thank You! Your Order Has Been Placed 🎉
+                </h2>
+                <p className="text-sm text-gray-600 mt-1 max-w-2xl leading-relaxed">
+                  We have successfully received your order and sent a confirmation receipt to your email.
+                  Our team is preparing your package with farm-fresh care.
+                </p>
+
+                <div className="flex flex-wrap gap-3 mt-4 justify-center sm:justify-start">
+                  <Link
+                    href="/products"
+                    className="px-5 py-2.5 rounded-xl bg-brand-red hover:bg-[#991B1B] text-white text-xs font-bold transition-all shadow-sm inline-flex items-center gap-1.5"
+                  >
+                    Continue Shopping <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  {isGuest && (
+                    <button
+                      type="button"
+                      onClick={() => useAuthModalStore.getState().openRegister()}
+                      className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-100 border border-gray-200 text-gray-800 text-xs font-bold transition-all"
+                    >
+                      Create Account to Track Orders
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -93,31 +132,32 @@ export default function OrdersPage() {
               <div key={i} className="bg-white rounded-2xl p-6 skeleton h-32" />
             ))}
           </div>
-        ) : isGuest && successOrder ? (
+        ) : isGuest && !successOrder ? (
           <div className="bg-white rounded-2xl p-8 shadow-card text-center max-w-xl mx-auto my-8">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-              <ShoppingBag className="w-8 h-8 text-emerald-600" />
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-8 h-8 text-amber-600" />
             </div>
-            <h2 className="font-heading font-bold text-2xl text-gray-900 mb-2">Guest Order Confirmed!</h2>
+            <h2 className="font-heading font-bold text-2xl text-gray-900 mb-2">Track Your Orders</h2>
             <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-              We have received your order <strong className="text-gray-900">#{successOrder}</strong>. An email confirmation and receipt have been dispatched to the email address you provided.
+              Log in to your Crazilo account to view your past purchases, shipment statuses, and delivery receipts.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => useAuthModalStore.getState().openLogin()}
+                className="w-full sm:w-auto px-6 py-3 bg-brand-red text-white font-semibold rounded-xl hover:bg-brand-red-dark transition cursor-pointer"
+              >
+                Log In
+              </button>
               <Link
                 href="/products"
-                className="w-full sm:w-auto px-6 py-3 bg-brand-red text-white font-semibold rounded-xl hover:bg-brand-red-dark transition"
-              >
-                Continue Shopping
-              </Link>
-              <Link
-                href="/auth/register"
                 className="w-full sm:w-auto px-6 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition"
               >
-                Create an Account
+                Browse Products
               </Link>
             </div>
           </div>
-        ) : orders.length === 0 ? (
+        ) : orders.length === 0 && !successOrder ? (
           <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl">
             <Package className="w-16 h-16 text-gray-200 mb-4" />
             <h2 className="font-heading text-xl font-bold text-gray-700 mb-2">No orders yet</h2>
@@ -187,5 +227,19 @@ export default function OrdersPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red" />
+        </div>
+      }
+    >
+      <OrdersPageContent />
+    </Suspense>
   )
 }

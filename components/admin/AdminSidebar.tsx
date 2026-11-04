@@ -133,7 +133,7 @@ export default function AdminSidebar() {
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/')
+    window.location.href = '/admin'
   }
 
   const toggleGroup = (label: string) => {

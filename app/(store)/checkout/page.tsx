@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { MapPin, CreditCard, User } from 'lucide-react'
+import { MapPin, CreditCard, CheckCircle, ArrowRight, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/lib/store/cartStore'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/utils/formatPrice'
@@ -21,19 +21,29 @@ export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart } = useCartStore()
   const [loading, setLoading] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [confirmedOrder, setConfirmedOrder] = useState<{
+    orderNumber: string
+    orderId: string
+    totalAmount: number
+    shippingAddress: any
+    items: any[]
+    paymentMethod: string
+  } | null>(null)
   const totalPrice = getTotalPrice()
   const { calculateShipping } = useShippingSettings()
   const shipping = calculateShipping(totalPrice)
   const grandTotal = totalPrice + shipping
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<OrderFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
     defaultValues: { payment_method: 'cod', same_as_shipping: true },
   })
 
+  const selectedPaymentMethod = watch('payment_method') ?? 'cod'
+
   useEffect(() => {
+    const supabase = createClient()
     const checkUser = async () => {
-      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setCurrentUser(user)
@@ -44,6 +54,21 @@ export default function CheckoutPage() {
       }
     }
     checkUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user || null
+      setCurrentUser(user)
+      if (user) {
+        if (user.email) setValue('shipping_address.email', user.email)
+        if (user.user_metadata?.full_name) {
+          setValue('shipping_address.full_name', user.user_metadata.full_name)
+        }
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [setValue])
 
   useEffect(() => {
@@ -53,7 +78,7 @@ export default function CheckoutPage() {
     else if (p === 'invalid') toast.error('Payment response could not be verified. If money was debited, contact support.')
   }, [])
 
-  if (items.length === 0) {
+  if (items.length === 0 && !confirmedOrder) {
     router.push('/cart')
     return null
   }
@@ -107,14 +132,92 @@ export default function CheckoutPage() {
         return
       }
 
+      const itemsSnapshot = [...items]
       clearCart()
-      toast.success('Order placed successfully!')
-      router.push(`/orders?success=${result.order_number}`)
+      setConfirmedOrder({
+        orderNumber: result.order_number,
+        orderId: result.order_id,
+        totalAmount: grandTotal,
+        shippingAddress: data.shipping_address,
+        items: itemsSnapshot,
+        paymentMethod: data.payment_method,
+      })
+      toast.success('Order placed successfully! 🎉', { duration: 6000 })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err: any) {
       toast.error(err.message || 'Failed to place order')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (confirmedOrder) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-gray-100 text-center animate-fadeIn">
+          {/* Animated check badge */}
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ring-8 ring-emerald-50">
+            <CheckCircle className="w-10 h-10 stroke-[2.5]" />
+          </div>
+
+          <span className="inline-block px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200 mb-3">
+            Order Confirmed
+          </span>
+
+          <h1 className="font-heading text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+            Thank You for Your Order! 🎉
+          </h1>
+          <p className="text-gray-600 text-sm mt-2 max-w-md mx-auto">
+            We have received your order and are preparing it with care. A confirmation email has been dispatched.
+          </p>
+
+          {/* Order reference banner */}
+          <div className="my-6 p-4 rounded-2xl bg-gray-50 border border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Order Number</p>
+              <p className="text-base font-extrabold text-gray-900 font-mono">#{confirmedOrder.orderNumber}</p>
+            </div>
+            <div className="sm:text-right">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Payment Method</p>
+              <p className="text-xs font-bold text-emerald-700 capitalize">
+                {confirmedOrder.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}
+              </p>
+            </div>
+            <div className="sm:text-right">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Amount</p>
+              <p className="text-base font-black text-brand-red">{formatPrice(confirmedOrder.totalAmount)}</p>
+            </div>
+          </div>
+
+          {/* Shipping destination summary */}
+          <div className="p-4 rounded-2xl border border-gray-100 bg-white text-left mb-6 text-xs text-gray-600 space-y-1">
+            <p className="font-bold text-gray-900 text-sm mb-1.5 flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-brand-red" /> Delivery Details
+            </p>
+            <p className="font-semibold text-gray-800">{confirmedOrder.shippingAddress.full_name}</p>
+            <p>{confirmedOrder.shippingAddress.address_line1}{confirmedOrder.shippingAddress.address_line2 ? `, ${confirmedOrder.shippingAddress.address_line2}` : ''}</p>
+            <p>{confirmedOrder.shippingAddress.city}, {confirmedOrder.shippingAddress.state} - {confirmedOrder.shippingAddress.pincode}</p>
+            <p className="text-gray-500 pt-1">Contact: {confirmedOrder.shippingAddress.phone} {confirmedOrder.shippingAddress.email ? `• ${confirmedOrder.shippingAddress.email}` : ''}</p>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              href="/products"
+              className="w-full sm:w-auto px-7 py-3.5 bg-brand-red hover:bg-[#991B1B] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              Continue Shopping <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href={`/orders?success=${confirmedOrder.orderNumber}`}
+              className="w-full sm:w-auto px-7 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center"
+            >
+              View in My Orders
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -126,27 +229,6 @@ export default function CheckoutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Form */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Guest / Account Banner */}
-              {!currentUser && (
-                <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700">
-                      <User className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">Guest Checkout</p>
-                      <p className="text-xs text-gray-500">You can complete your purchase without creating an account.</p>
-                    </div>
-                  </div>
-                  <Link
-                    href="/auth/login?redirect=/checkout"
-                    className="text-xs font-semibold text-brand-red hover:underline shrink-0"
-                  >
-                    Log In
-                  </Link>
-                </div>
-              )}
-
               {/* Shipping Address */}
               <div className="bg-white rounded-2xl p-6 shadow-card">
                 <div className="flex items-center gap-3 mb-6">
@@ -237,15 +319,37 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="flex items-center gap-3 p-4 rounded-xl border-2 border-brand-red bg-red-50 cursor-pointer">
-                    <input type="radio" {...register('payment_method')} value="cod" defaultChecked className="accent-brand-red" />
+                  <label
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      selectedPaymentMethod === 'cod'
+                        ? 'border-brand-red bg-red-50/60 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      {...register('payment_method')}
+                      value="cod"
+                      className="accent-brand-red w-4 h-4 cursor-pointer"
+                    />
                     <div>
                       <p className="font-semibold text-sm text-gray-900">Cash on Delivery</p>
                       <p className="text-xs text-gray-500">Pay when your order arrives</p>
                     </div>
                   </label>
-                  <label className="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 cursor-pointer">
-                    <input type="radio" {...register('payment_method')} value="online" className="accent-brand-red" />
+                  <label
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      selectedPaymentMethod === 'online'
+                        ? 'border-brand-red bg-red-50/60 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      {...register('payment_method')}
+                      value="online"
+                      className="accent-brand-red w-4 h-4 cursor-pointer"
+                    />
                     <div>
                       <p className="font-semibold text-sm text-gray-900">Online Payment</p>
                       <p className="text-xs text-gray-500">Cards, UPI, Net Banking via PayU</p>

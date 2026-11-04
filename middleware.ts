@@ -46,13 +46,25 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // 1. ADMIN ROUTES
   if (pathname.startsWith('/admin')) {
-    if (!user) {
-      const loginUrl = new URL('/auth/login', request.url)
-      loginUrl.searchParams.set('redirect', `${request.nextUrl.pathname}${request.nextUrl.search}`)
-      return NextResponse.redirect(loginUrl)
+    // If user navigates to /admin/login directly, redirect to /admin so URL is always domain/admin
+    if (pathname === '/admin/login') {
+      return NextResponse.redirect(new URL('/admin', request.url))
     }
-    
+
+    // If unauthenticated, rewrite internally to /admin/login
+    // The browser URL remains strictly domain/admin
+    if (!user) {
+      const requestHeaders = new Headers(request.headers)
+      requestHeaders.set('x-is-admin-login', '1')
+      return NextResponse.rewrite(new URL('/admin/login', request.url), {
+        request: {
+          headers: requestHeaders,
+        },
+      })
+    }
+
     let { data: profile } = await supabase
       .from('profiles')
       .select('role, is_active')
@@ -65,7 +77,7 @@ export async function middleware(request: NextRequest) {
         const { createClient: createSupabaseJSClient } = await import('@supabase/supabase-js')
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_KEY
         const supabaseAdminClient = createSupabaseJSClient(SUPABASE_URL, serviceRoleKey)
-        
+
         await supabaseAdminClient
           .from('profiles')
           .upsert({
@@ -74,10 +86,9 @@ export async function middleware(request: NextRequest) {
             full_name: user.user_metadata?.full_name || 'Admin',
             role: 'admin',
             is_active: true,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
           })
 
-        // Re-fetch profile
         const { data: updatedProfile } = await supabase
           .from('profiles')
           .select('role, is_active')
@@ -89,46 +100,38 @@ export async function middleware(request: NextRequest) {
       }
     }
 
+    // Suspended admin account
     if (profile && !profile.is_active) {
       await supabase.auth.signOut()
-      const loginUrl = new URL('/auth/login', request.url)
+      const requestHeaders = new Headers(request.headers)
+      requestHeaders.set('x-is-admin-login', '1')
+      const loginUrl = new URL('/admin/login', request.url)
       loginUrl.searchParams.set('error', 'suspended')
-      const redirectResponse = NextResponse.redirect(loginUrl)
-      supabaseResponse.cookies.getAll().forEach(c => {
-        redirectResponse.cookies.set(c.name, c.value, {
-          path: c.path,
-          domain: c.domain,
-          secure: c.secure,
-          httpOnly: c.httpOnly,
-          sameSite: c.sameSite,
-          expires: c.expires,
-          maxAge: c.maxAge,
-        } as any)
+      return NextResponse.rewrite(loginUrl, {
+        request: {
+          headers: requestHeaders,
+        },
       })
-      return redirectResponse
     }
 
+    // Non-admin users cannot access admin routes
     if (!profile || profile.role !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url))
+      const requestHeaders = new Headers(request.headers)
+      requestHeaders.set('x-is-admin-login', '1')
+      return NextResponse.rewrite(new URL('/admin/login', request.url), {
+        request: {
+          headers: requestHeaders,
+        },
+      })
     }
   }
 
-  const isOrderConfirmation =
-    pathname.startsWith('/orders') &&
-    (request.nextUrl.searchParams.has('success') ||
-      request.nextUrl.searchParams.has('paid') ||
-      request.nextUrl.searchParams.has('payment'))
-
-  // Allow guests to checkout and view payment confirmation.
-  // Require login for account page or general order history.
-  if (
-    pathname.startsWith('/account') ||
-    (pathname.startsWith('/orders') && !isOrderConfirmation)
-  ) {
+  // 2. STORE ROUTES
+  // Allow guests to browse, add to cart, checkout, and view order confirmations.
+  // Require login only for the account profile page.
+  if (pathname.startsWith('/account')) {
     if (!user) {
-      const loginUrl = new URL('/auth/login', request.url)
-      loginUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(loginUrl)
+      return NextResponse.redirect(new URL('/', request.url))
     }
 
     const { data: profile } = await supabase
@@ -139,21 +142,7 @@ export async function middleware(request: NextRequest) {
 
     if (profile && !profile.is_active) {
       await supabase.auth.signOut()
-      const loginUrl = new URL('/auth/login', request.url)
-      loginUrl.searchParams.set('error', 'suspended')
-      const redirectResponse = NextResponse.redirect(loginUrl)
-      supabaseResponse.cookies.getAll().forEach(c => {
-        redirectResponse.cookies.set(c.name, c.value, {
-          path: c.path,
-          domain: c.domain,
-          secure: c.secure,
-          httpOnly: c.httpOnly,
-          sameSite: c.sameSite,
-          expires: c.expires,
-          maxAge: c.maxAge,
-        } as any)
-      })
-      return redirectResponse
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
 

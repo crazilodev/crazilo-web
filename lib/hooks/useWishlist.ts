@@ -2,19 +2,17 @@
 
 import { useWishlistStore } from '@/lib/store/wishlistStore'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { useRouter } from 'next/navigation'
+import { useAuthModalStore } from '@/lib/store/authModalStore'
 import toast from 'react-hot-toast'
 
 export function useWishlist() {
   const store = useWishlistStore()
   const { user } = useAuth()
-  const router = useRouter()
 
   const toggle = (productId: string, productName?: string) => {
     if (!user) {
       toast.error('Please sign in to save favorites!', { duration: 2500 })
-      const currentPath = window.location.pathname + window.location.search
-      router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}&action=favorite&wishlist_item=${productId}`)
+      useAuthModalStore.getState().openLogin()
       return
     }
 

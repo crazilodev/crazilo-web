@@ -6,13 +6,14 @@ import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, ShoppingCart, User, Heart, ChevronDown,
-  LogOut, Package, Settings, Menu, X, Compass, MapPin,
+  LogOut, Package, Settings, Menu, X, Compass,
   ChevronRight, ArrowRight, Shield
 } from 'lucide-react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useCartStore } from '@/lib/store/cartStore'
 import { useWishlistStore } from '@/lib/store/wishlistStore'
+import { useAuthModalStore } from '@/lib/store/authModalStore'
 import { Category, Profile } from '@/types'
 import type { User as SupaUser } from '@supabase/supabase-js'
 import { getMainCategories, getSubcategories } from '@/lib/data/categories'
@@ -57,6 +58,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const { toggleCart, getTotalItems } = useCartStore()
   const { items: wishlistItems } = useWishlistStore()
+  const openLogin = useAuthModalStore((s) => s.openLogin)
   const totalCartItems = getTotalItems()
 
   useEffect(() => {
@@ -80,6 +82,21 @@ export default function Navbar() {
       }
     }
     fetchData()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const u = session?.user || null
+      setUser(u)
+      if (u) {
+        const prof = await getProfileById(supabase, u.id)
+        setProfile(prof)
+      } else {
+        setProfile(null)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   // Prevent background scrolling when mobile menu or search drawer is active
@@ -344,13 +361,14 @@ export default function Navbar() {
                     )}
                   </div>
                 ) : (
-                  <Link
-                    href="/auth/login"
-                    className="p-1.5 rounded-full text-gray-750 hover:text-[#B91C1C] hover:bg-[#FFF8F0] border border-gray-100 transition-colors inline-flex items-center"
+                  <button
+                    type="button"
+                    onClick={() => openLogin()}
+                    className="p-1.5 rounded-full text-gray-750 hover:text-[#B91C1C] hover:bg-[#FFF8F0] border border-gray-100 transition-colors inline-flex items-center cursor-pointer"
                     aria-label="Sign In"
                   >
                     <User className="w-4 h-4" />
-                  </Link>
+                  </button>
                 )}
               </div>
 
@@ -704,10 +722,17 @@ export default function Navbar() {
                     </button>
                   </>
                 ) : (
-                  <Link href="/auth/login" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 hover:text-[#B91C1C]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMobileMenu(false)
+                      openLogin()
+                    }}
+                    className="flex items-center gap-2 hover:text-[#B91C1C] text-left w-full cursor-pointer"
+                  >
                     <User className="w-4 h-4" />
                     <span>Sign In</span>
-                  </Link>
+                  </button>
                 )}
 
                 <div className="border-t border-gray-100 my-1"></div>
@@ -715,10 +740,6 @@ export default function Navbar() {
                 <Link href="/orders" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 hover:text-[#B91C1C]">
                   <Compass className="w-4 h-4" />
                   <span>Track Order</span>
-                </Link>
-                <Link href="/store-locator" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 hover:text-[#B91C1C]">
-                  <MapPin className="w-4 h-4" />
-                  <span>Store Locator</span>
                 </Link>
               </div>
             </motion.div>

@@ -21,7 +21,6 @@ const siteSettingsSchema = z.object({
   privacy_policy_url: z.string().max(500).trim().nullable().optional(),
   terms_url: z.string().max(500).trim().nullable().optional(),
   returns_policy_url: z.string().max(500).trim().nullable().optional(),
-  store_locator_url: z.string().max(500).trim().nullable().optional(),
   faqs_url: z.string().max(500).trim().nullable().optional(),
 })
 
@@ -50,7 +49,6 @@ export async function updateSiteSettingsAction(payload: any) {
       privacy_policy_url: parsed.privacy_policy_url || null,
       terms_url: parsed.terms_url || null,
       returns_policy_url: parsed.returns_policy_url || null,
-      store_locator_url: parsed.store_locator_url || null,
       faqs_url: parsed.faqs_url || null,
       updated_at: new Date().toISOString(),
     }

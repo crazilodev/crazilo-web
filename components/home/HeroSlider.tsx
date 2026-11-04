@@ -12,19 +12,91 @@ interface HeroSliderProps {
   highlights: HomeHighlight[]
 }
 
+function HeroSlideItem({ banner }: { banner: Banner }) {
+  const bgColors = (banner.bg_color || '').split(';')
+  const btnBgColor = bgColors[1] || '#B91C1C'
+
+  const textColors = (banner.text_color || '').split(';')
+  const btnTextColor = textColors[1] || '#FFFFFF'
+
+  return (
+    <>
+      {/* Banner Background Image */}
+      <Link
+        href={banner.cta_link || '/products'}
+        className="absolute inset-0 w-full h-full block z-0 group cursor-pointer"
+      >
+        {banner.mobile_image_url ? (
+          <>
+            <div className="block sm:hidden absolute inset-0 w-full h-full">
+              <Image
+                src={banner.mobile_image_url}
+                alt={banner.title || 'Hero Banner'}
+                fill
+                className="object-cover object-center"
+                priority
+                sizes="100vw"
+              />
+            </div>
+            <div className="hidden sm:block absolute inset-0 w-full h-full">
+              <Image
+                src={banner.image_url}
+                alt={banner.title || 'Hero Banner'}
+                fill
+                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.01]"
+                priority
+                sizes="100vw"
+              />
+            </div>
+          </>
+        ) : (
+          <Image
+            src={banner.image_url}
+            alt={banner.title || 'Hero Banner'}
+            fill
+            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.01]"
+            priority
+            sizes="100vw"
+          />
+        )}
+      </Link>
+
+      {/* Shopping CTA Button positioned lower on the banner */}
+      <div className="absolute bottom-3.5 left-4 sm:bottom-8 sm:left-12 z-20">
+        <Link
+          href={banner.cta_link || '/products'}
+          className="inline-flex items-center gap-1 sm:gap-2 font-black text-[8.5px] sm:text-xs tracking-wider uppercase px-3.5 py-1.5 sm:px-7 sm:py-3.5 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:brightness-110 active:scale-95 whitespace-nowrap"
+          style={{
+            backgroundColor: btnBgColor || '#B91C1C',
+            color: btnTextColor || '#FFFFFF',
+          }}
+        >
+          <span>{banner.cta_text || 'SHOP NOW'}</span>
+          <ArrowRight className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+        </Link>
+      </div>
+    </>
+  )
+}
+
 export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [direction, setDirection] = useState(0)
-  const [mounted, setMounted] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [direction, setDirection] = useState(1)
 
+  // Preload all banner images so transitions are instant with zero white flicker
   useEffect(() => {
-    setMounted(true)
-    setIsMobile(window.innerWidth < 640)
-    const handleResize = () => setIsMobile(window.innerWidth < 640)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+    if (!banners || banners.length === 0) return
+    banners.forEach((b) => {
+      if (b.image_url) {
+        const img = new window.Image()
+        img.src = b.image_url
+      }
+      if (b.mobile_image_url) {
+        const mImg = new window.Image()
+        mImg.src = b.mobile_image_url
+      }
+    })
+  }, [banners])
 
   useEffect(() => {
     if (banners.length <= 1) return
@@ -47,32 +119,17 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
     setActiveIndex((prev) => (prev + 1) % banners.length)
   }
 
-  const activeBanner = banners[activeIndex]
-
-  const bgColors = (activeBanner.bg_color || '').split(';')
-  const slideBgColor = bgColors[0] || '#0F0F0F'
-  const btnBgColor = bgColors[1] || '#B91C1C'
-
-  const textColors = (activeBanner.text_color || '').split(';')
-  const textColor = textColors[0] || '#FFFFFF'
-  const btnTextColor = textColors[1] || '#FFFFFF'
-
   const slideVariants = {
     enter: (dir: number) => ({
-      x: dir > 0 ? '100%' : '-100%',
-      opacity: 0,
+      x: dir >= 0 ? '100%' : '-100%',
     }),
     center: {
       x: 0,
-      opacity: 1,
     },
     exit: (dir: number) => ({
-      x: dir < 0 ? '100%' : '-100%',
-      opacity: 0,
+      x: dir >= 0 ? '-100%' : '100%',
     }),
   }
-
-  const hasMobileImage = mounted && isMobile && !!activeBanner?.mobile_image_url
 
   return (
     <section className="relative w-full select-none bg-white sm:border-b sm:border-gray-100 px-3 pt-2 pb-1 sm:px-0 sm:pt-0 sm:pb-0">
@@ -81,8 +138,8 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
         - Mobile: exact 358x200px rounded card presentation
         - Desktop: full-bleed high-definition presentation
       */}
-      <div className="relative w-full max-w-[358px] h-[200px] sm:h-auto sm:max-w-none sm:aspect-[1.9/1] md:aspect-[2.1/1] lg:aspect-[2.4/1] xl:aspect-[2.5/1] sm:min-h-[380px] md:min-h-[440px] lg:min-h-[500px] xl:min-h-[540px] mx-auto rounded-2xl sm:rounded-none overflow-hidden shadow-sm sm:shadow-none bg-[#121212] sm:bg-transparent">
-        <AnimatePresence initial={false} custom={direction} mode="wait">
+      <div className="relative w-full max-w-[358px] h-[200px] sm:h-auto sm:max-w-none sm:aspect-[1.9/1] md:aspect-[2.1/1] lg:aspect-[2.4/1] xl:aspect-[2.5/1] sm:min-h-[380px] md:min-h-[440px] lg:min-h-[500px] xl:min-h-[540px] mx-auto rounded-2xl sm:rounded-none overflow-hidden shadow-sm sm:shadow-none bg-[#121212]">
+        <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={activeIndex}
             custom={direction}
@@ -91,10 +148,9 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
             animate="center"
             exit="exit"
             transition={{
-              x: { type: 'spring', stiffness: 220, damping: 28 },
-              opacity: { duration: 0.3 },
+              x: { type: 'tween', ease: [0.25, 1, 0.5, 1], duration: 0.65 },
             }}
-            drag={isMobile ? 'x' : false}
+            drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
             onDragEnd={(e, info) => {
@@ -107,35 +163,7 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
             }}
             className="w-full h-full absolute inset-0 flex items-center"
           >
-            {/* Banner Background Image */}
-            <Link
-              href={activeBanner.cta_link || '/products'}
-              className="absolute inset-0 w-full h-full block z-0 group cursor-pointer"
-            >
-              <Image
-                src={hasMobileImage ? activeBanner.mobile_image_url! : activeBanner.image_url}
-                alt={activeBanner.title || 'Hero Banner'}
-                fill
-                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.01]"
-                priority
-                sizes="100vw"
-              />
-            </Link>
-
-            {/* Shopping CTA Button positioned lower on the banner */}
-            <div className="absolute bottom-3.5 left-4 sm:bottom-8 sm:left-12 z-20">
-              <Link
-                href={activeBanner.cta_link || '/products'}
-                className="inline-flex items-center gap-1 sm:gap-2 font-black text-[8.5px] sm:text-xs tracking-wider uppercase px-3.5 py-1.5 sm:px-7 sm:py-3.5 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:brightness-110 active:scale-95 whitespace-nowrap"
-                style={{
-                  backgroundColor: btnBgColor || '#B91C1C',
-                  color: btnTextColor || '#FFFFFF',
-                }}
-              >
-                <span>{activeBanner.cta_text || 'SHOP NOW'}</span>
-                <ArrowRight className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
-              </Link>
-            </div>
+            <HeroSlideItem banner={banners[activeIndex]} />
           </motion.div>
         </AnimatePresence>
 
@@ -155,7 +183,7 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
                 <button
                   key={index}
                   onClick={() => {
-                    setDirection(index > activeIndex ? 1 : -1)
+                    setDirection(index >= activeIndex ? 1 : -1)
                     setActiveIndex(index)
                   }}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
@@ -186,7 +214,7 @@ export default function HeroSlider({ banners, highlights }: HeroSliderProps) {
             <button
               key={index}
               onClick={() => {
-                setDirection(index > activeIndex ? 1 : -1)
+                setDirection(index >= activeIndex ? 1 : -1)
                 setActiveIndex(index)
               }}
               className={`h-1 rounded-full transition-all duration-300 ${

@@ -1,6 +1,7 @@
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminHeader from '@/components/admin/AdminHeader'
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
@@ -9,6 +10,9 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const headersList = headers()
+  const isAdminLogin = headersList.get('x-is-admin-login') === '1'
+
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
@@ -20,6 +24,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       .eq('id', user.id)
       .single()
     profile = data
+  }
+
+  // If viewing admin login or not authenticated as admin, render full-page login form without dashboard chrome
+  if (isAdminLogin || !user || profile?.role !== 'admin' || !profile?.is_active) {
+    return <>{children}</>
   }
 
   const adminName = profile?.full_name || user?.email?.split('@')[0] || 'Admin'

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Truck, Leaf, Shield, Heart, MapPin, Compass } from 'lucide-react'
+import { Truck, Leaf, Shield, Heart, Compass } from 'lucide-react'
 import type { Announcement, HomeHighlight, SiteSettings } from '@/types'
 
 interface AnnouncementBarProps {
@@ -14,7 +14,6 @@ export default function AnnouncementBar({
   siteSettings,
 }: AnnouncementBarProps) {
   const shippingThreshold = siteSettings?.free_shipping_threshold ?? 699
-  const storeLocatorHref = siteSettings?.store_locator_url || '/store-locator'
 
   return (
     <div className="bg-[#7F1D1D] text-white text-[10px] sm:text-[11px] py-1.5 sm:py-2 border-b border-white/5 z-50 relative select-none">
@@ -45,14 +44,8 @@ export default function AnnouncementBar({
             <Compass className="w-3.5 h-3.5 text-white/70" />
             <span>Track Order</span>
           </Link>
-          <span className="opacity-20">|</span>
-          <Link href={storeLocatorHref} className="hover:text-white transition-colors flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 text-white/70" />
-            <span>Store Locator</span>
-          </Link>
         </div>
       </div>
     </div>
   )
 }
-
