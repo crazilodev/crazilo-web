@@ -55,7 +55,7 @@ export default function CheckoutPage() {
     }
     checkUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       const user = session?.user || null
       setCurrentUser(user)
       if (user) {
